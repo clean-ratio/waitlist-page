@@ -1,0 +1,283 @@
+/*
+ * The only control on screen. The deck runs along the up-left / down-right
+ * diagonal — passed cards leave through the top-left, upcoming ones wait at
+ * the bottom-right — so bottom-left is a corner it never reaches.
+ */
+.panel {
+  position: fixed;
+  left: var(--edge);
+  bottom: var(--edge);
+  z-index: var(--z-panel);
+  width: 240px;
+  /* Past this it starts competing with the deck. */
+  max-width: 18vw;
+  padding: 12px;
+  border-radius: 2px;
+  color: var(--paper);
+  pointer-events: auto;
+  background: linear-gradient(135deg, rgb(28 27 25 / 0.42), rgb(18 17 16 / 0.28));
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    0 24px 48px -28px rgb(0 0 0 / 0.5);
+  transition:
+    transform 600ms var(--step-ease),
+    opacity 600ms ease;
+}
+
+/*
+ * Only one blur surface may be live while the deck animates. During a step the
+ * panel drops to a flat fill and the glass form keeps the blur.
+ */
+.flat {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: rgb(20 20 20 / 0.35);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel {
+    backdrop-filter: none;
+    background: rgb(20 20 20 / 0.45);
+  }
+}
+
+/* Thanks step: out to the bottom-left as the music fades. */
+.leaving {
+  transform: translate3d(-130%, 40%, 0);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.kicker {
+  color: rgb(247 245 241 / 0.8);
+  margin-bottom: 10px;
+}
+
+/* The object sits in a 4:5 field, filling about 60% of its height. */
+.object {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: 2px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.06);
+  display: grid;
+  place-items: center;
+  margin-bottom: 10px;
+}
+
+.objectBlur {
+  position: absolute;
+  inset: -20%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(18px) saturate(120%);
+  opacity: 0.55;
+  transition: opacity 400ms ease;
+}
+
+.thumb {
+  position: relative;
+  height: 60%;
+  width: auto;
+  max-width: 82%;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 18px rgb(0 0 0 / 0.45));
+  animation: float 7s ease-in-out infinite alternate;
+}
+
+/* No cut-out yet: fall back to a framed crop of the card image. */
+.thumbFallback {
+  height: 68%;
+  width: 78%;
+  object-fit: cover;
+  border: 1px solid rgb(255 255 255 / 0.2);
+}
+
+@keyframes float {
+  from {
+    transform: translateY(-2px);
+  }
+  to {
+    transform: translateY(3px);
+  }
+}
+
+/* Content crossfades 400 ms after the deck lands. */
+.fade {
+  transition: opacity 400ms ease;
+}
+
+.fadeOut {
+  opacity: 0;
+}
+
+.title {
+  font-family: var(--font-body);
+  font-weight: var(--font-body-weight);
+  font-size: 25px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.subtitle {
+  color: rgb(247 245 241 / 0.7);
+  margin-top: 4px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  margin-top: 12px;
+  background: rgb(255 255 255 / 0.16);
+  border: 1px solid rgb(255 255 255 / 0.16);
+}
+
+.button {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  background: rgb(20 20 20 / 0.25);
+  color: var(--paper);
+  transition:
+    background 200ms ease,
+    opacity 200ms ease;
+}
+
+.button:hover:not(:disabled) {
+  background: rgb(60 58 54 / 0.45);
+}
+
+.button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.button svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* The three waveform bars move only while sound is actually playing. */
+.bar {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: wave 1.4s ease-in-out infinite;
+}
+
+.bar:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.bar:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+.barsStill .bar {
+  animation: none;
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Questions step: collapse to the controls row only. */
+.collapsed .object,
+.collapsed .title,
+.collapsed .subtitle,
+.collapsed .kicker {
+  display: none;
+}
+
+.collapsed .controls {
+  margin-top: 0;
+}
+
+/*
+ * Under 640 px the panel would cover the deck. It becomes a 56 px bar across
+ * the bottom. Previous and Next are dropped there: swipes already do that.
+ */
+@media (max-width: 640px) {
+  .panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-width: none;
+    height: 56px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 0;
+  }
+
+  .kicker {
+    display: none;
+  }
+
+  .object {
+    width: 40px;
+    height: 40px;
+    aspect-ratio: 1;
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .meta {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .title {
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .subtitle {
+    display: none;
+  }
+
+  .controls {
+    margin-top: 0;
+    grid-template-columns: repeat(2, 40px);
+    flex: 0 0 auto;
+  }
+
+  .mobileHidden {
+    display: none;
+  }
+
+  .leaving {
+    transform: translate3d(0, 120%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumb {
+    animation: none;
+  }
+  .bar {
+    animation: none;
+  }
+  .panel,
+  .fade,
+  .objectBlur {
+    transition: none;
+  }
+}

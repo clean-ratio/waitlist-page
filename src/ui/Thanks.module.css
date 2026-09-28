@@ -1,0 +1,59 @@
+.section {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-card);
+  display: grid;
+  place-items: center;
+  padding: var(--gutter);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 700ms ease;
+}
+
+.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 300ms;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 34ch;
+}
+
+.line {
+  font-size: var(--display-line);
+}
+
+.line em {
+  font-style: normal;
+}
+
+.signoff {
+  font-size: 13px;
+  color: var(--stone);
+}
+
+/* Commerce appears here and nowhere else, and even here it is one link. */
+.link {
+  font-size: 13px;
+  color: var(--stone);
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 2px;
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+
+.link:hover {
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section {
+    transition-duration: 200ms;
+  }
+}

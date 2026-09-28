@@ -1,0 +1,116 @@
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  /* The page never actually scrolls. Every gesture becomes one step. */
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--bone);
+  color: var(--ink);
+  font: var(--font-body-weight) var(--body) / var(--body-leading) var(--font-body);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  height: 100%;
+}
+
+/* Thin, but never removed. */
+:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 3px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+p {
+  margin: 0;
+  /* Never more than about 60 characters on a line. */
+  max-width: 60ch;
+}
+
+.u-label {
+  font: var(--font-label-weight) var(--label) / 1.4 var(--font-label);
+  text-transform: uppercase;
+  letter-spacing: var(--label-tracking);
+  color: var(--stone);
+  margin: 0;
+}
+
+.u-serif {
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-style: normal;
+  letter-spacing: 0;
+  line-height: 1.1;
+  margin: 0;
+}
+
+/* Screen-reader-only, but still focusable and still announced. */
+.u-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/*
+ * The frosted form card, and the Now Playing panel.
+ *
+ * The blur alone is not enough to read against: the page is near-white, so a
+ * mostly-transparent white card disappears into it. The fill carries the
+ * legibility and the blur carries the depth.
+ */
+.glass {
+  background: linear-gradient(
+    150deg,
+    rgb(252 251 249 / 0.92),
+    rgb(240 236 230 / 0.86)
+  );
+  backdrop-filter: blur(26px) saturate(135%);
+  -webkit-backdrop-filter: blur(26px) saturate(135%);
+  border: 1px solid rgb(255 255 255 / 0.7);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.9),
+    0 2px 6px rgb(26 25 22 / 0.04),
+    0 50px 90px -45px rgb(26 25 22 / 0.4);
+}
+
+/* The same fill without the blur, for when it is far from the active slot. */
+.glass--flat {
+  background: rgb(248 246 243 / 0.96);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: rgb(248 246 243 / 0.96);
+  }
+}

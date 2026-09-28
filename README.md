@@ -173,9 +173,13 @@ populate `process.env` either, so the dev-API plugin loads `.env.local` itself
    twice with the same address and you should still see one row, with
    `consent_at` and `consent_version` filled in.
 
-For production, set the same two variables in **Vercel → Settings →
-Environment Variables** (all environments) and redeploy. `.env.local` is
-gitignored and never reaches Vercel.
+For Vercel, link this directory to your project with `vercel link`, then run
+`./scripts/import-vercel-env.ps1` in PowerShell. The helper reads `SUPABASE_URL`
+from `.env` and the server-only `SUPABASE_SERVICE_ROLE_KEY` from `.env.local`,
+then imports both into Development, Preview, and Production. It requires the
+Vercel CLI and an authenticated, linked project. `.env` files are excluded from
+Git and Vercel deployment uploads. Redeploy after importing so the values are
+available to the functions.
 
 Export the list:
 

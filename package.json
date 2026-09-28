@@ -1,0 +1,37 @@
+{
+  "name": "scroll-card-stack",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit false --emitDeclarationOnly false",
+    "images": "node scripts/images.mjs"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2",
+    "@react-three/fiber": "^9.1.2",
+    "@supabase/supabase-js": "^2.117.2",
+    "framer-motion": "^13.4.4",
+    "gsap": "^3.13.0",
+    "howler": "^2.2.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "resend": "^4.5.1",
+    "three": "^0.176.0",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "@types/howler": "^2.2.12",
+    "@types/node": "^22.15.3",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@types/three": "^0.176.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "sharp": "^0.34.1",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.4"
+  }
+}

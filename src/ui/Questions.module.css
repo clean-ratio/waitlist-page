@@ -1,0 +1,447 @@
+/*
+ * The deck has gone, and what is left is a quiet page with two questions on
+ * it. Not a form: Q1 is a plate of tiles you pick from, Q2 is a single line
+ * you place yourself on.
+ */
+.section {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-card);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+/* Fades in on the same timeline as the deck exit, starting at 0.4 s. */
+.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transition-delay: 400ms;
+}
+
+.scroller {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: clamp(56px, 10vh, 120px) var(--gutter) clamp(110px, 16vh, 180px);
+}
+
+.inner {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(56px, 9vh, 96px);
+}
+
+/* A thin progress rail at the very top of the page. */
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--hairline);
+  transform-origin: left;
+}
+
+.progressFill {
+  width: 100%;
+  height: 100%;
+  background: var(--ink);
+  transform-origin: left;
+}
+
+.block {
+  transform: scale(var(--nudge, 1));
+  transform-origin: center top;
+  transition: transform 260ms var(--step-ease);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 6px;
+}
+
+.number {
+  font-family: var(--font-body);
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: var(--font-body-weight);
+  line-height: 1;
+  color: var(--ink);
+  opacity: 0.32;
+  font-variant-numeric: lining-nums;
+}
+
+.counter {
+  margin-left: auto;
+  color: var(--stone);
+  white-space: nowrap;
+}
+
+.question {
+  font-size: clamp(42px, 5vw, 62px);
+  margin-bottom: clamp(20px, 3vh, 30px);
+  max-width: 100%;
+}
+
+.rows {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.legend {
+  padding: 0;
+}
+
+/* ---------- Q1: a plate of tiles ---------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.tile {
+  position: relative;
+  display: block;
+  padding: 16px 16px 18px;
+  border: 1px solid var(--hairline);
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.4);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color 260ms ease,
+    background 260ms ease;
+}
+
+.tile:hover {
+  border-color: rgb(26 25 22 / 0.28);
+  background: rgb(255 255 255 / 0.75);
+}
+
+.tile[data-vibe='mint'] {
+  border-color: #b4cec0;
+  background: #e4eee8;
+}
+
+.tile[data-vibe='butter'] {
+  border-color: #d8c58f;
+  background: #f2e8c8;
+}
+
+.tile[data-vibe='sky'] {
+  border-color: #b8c5df;
+  background: #e5eaf3;
+}
+
+/*
+ * The text flips to paper as the fill sweeps up behind it. The delay lets the
+ * fill get most of the way there first — flip it immediately and the words
+ * vanish against the white for a beat.
+ */
+.tileIndex,
+.tileLabel,
+.tileLine {
+  transition:
+    color 260ms ease 140ms,
+    opacity 260ms ease 140ms;
+}
+
+.tileIndex {
+  grid-column: 2;
+  grid-row: 1;
+  padding-top: 4px;
+  font: var(--font-body-weight) 10px/1 var(--font-label);
+  letter-spacing: 0.16em;
+  color: var(--stone);
+  opacity: 0.55;
+}
+
+.tileLabel {
+  grid-column: 1;
+  grid-row: 1;
+  display: block;
+  font-family: var(--font-body);
+  font-size: 20px;
+  font-weight: var(--font-body-weight);
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.tileLine {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: block;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--stone);
+  margin-top: 5px;
+}
+
+/* The fill that sweeps up the tile when it is chosen. */
+.tileFill {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  transform-origin: bottom;
+  pointer-events: none;
+}
+
+.tileChosen {
+  border-color: var(--ink);
+}
+
+.tileChosen .tileLabel,
+.tileChosen .tileLine,
+.tileChosen .tileIndex {
+  color: var(--paper);
+  opacity: 1;
+}
+
+.tileContent {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 6px;
+  position: relative;
+  z-index: 1;
+}
+
+.tileFull {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.tileFull:hover {
+  border-color: var(--hairline);
+  background: rgb(255 255 255 / 0.4);
+}
+
+/* Real inputs, visually hidden under the styled rows, so arrow keys and
+   screen readers work for free. */
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The focus ring for the hidden input, drawn on its styled stand-in. */
+.input:focus-visible ~ .tileFocus {
+  position: absolute;
+  inset: 2px;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.input:focus-visible ~ .stopFocus {
+  position: absolute;
+  inset: -6px -10px;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.tileChosen .input:focus-visible ~ .tileFocus {
+  border-color: var(--paper);
+}
+
+.other {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  overflow: hidden;
+}
+
+.otherInput {
+  appearance: none;
+  border: 0;
+  border-bottom: 1px solid rgb(26 25 22 / 0.28);
+  background: transparent;
+  color: var(--ink);
+  font: var(--font-body-weight) 17px/1.5 var(--font-body);
+  padding: 7px 2px;
+  border-radius: 0;
+  max-width: 420px;
+}
+
+.otherInput:focus {
+  outline: none;
+  border-bottom-color: var(--ink);
+}
+
+/* ---------- Q2: one line you place yourself on ---------- */
+
+.scale {
+  position: relative;
+  margin-top: 28px;
+  padding-top: 26px;
+}
+
+.scaleRail {
+  position: relative;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.scaleTrack {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  transform-origin: left;
+}
+
+.scaleStops {
+  display: grid;
+  margin-top: -6px;
+}
+
+.stop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding-top: 0;
+  cursor: pointer;
+  text-align: center;
+}
+
+.stopDot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid rgb(26 25 22 / 0.3);
+  background: var(--bone);
+  transition:
+    border-color 240ms ease,
+    background 240ms ease;
+}
+
+.stopChosen .stopDot {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.stopLabel {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--stone);
+  max-width: 14ch;
+  transition: color 240ms ease;
+}
+
+.stop:hover .stopLabel {
+  color: var(--ink);
+}
+
+.stopChosen .stopLabel {
+  color: var(--ink);
+}
+
+/* The chosen answer, said back in full. */
+.echo {
+  margin-top: 30px;
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+  font-style: normal;
+  font-size: clamp(38px, 4vw, 52px);
+  line-height: 1.25;
+  min-height: 1.3em;
+}
+
+/* ---------- footer ---------- */
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 56px;
+}
+
+.send {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 34px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  font: var(--font-label-weight) 12px/1 var(--font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  transition:
+    background 240ms ease,
+    color 240ms ease;
+}
+
+.send:hover:not(:disabled) {
+  background: transparent;
+  color: var(--ink);
+}
+
+.error {
+  font: var(--font-body-weight) 12.5px/1.4 var(--font-body);
+  color: rgb(120 34 26);
+}
+
+@media (max-width: 640px) {
+  .tiles {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+
+  .tileLabel {
+    font-size: 18px;
+  }
+
+  /* The scale turns into a column: four stops will not fit across a phone. */
+  .scaleStops {
+    grid-template-columns: 1fr !important;
+    gap: 2px;
+    margin-top: 10px;
+  }
+
+  .scale {
+    padding-top: 0;
+  }
+
+  .scaleRail {
+    display: none;
+  }
+
+  .stop {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 14px;
+    text-align: left;
+    padding: 13px 2px;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .stopLabel {
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section,
+  .block,
+  .tile,
+  .stopDot {
+    transition-duration: 200ms;
+  }
+}

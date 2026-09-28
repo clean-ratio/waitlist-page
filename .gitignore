@@ -1,0 +1,12 @@
+node_modules
+dist
+.vercel
+.env
+.env.local
+.env.*.local
+*.log
+tsconfig.tsbuildinfo
+.DS_Store
+public/images/1600
+public/images/600
+public/images/manifest.json
