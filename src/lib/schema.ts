@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
 /**
- * One schema, used by the hero form and the profile questions, and by the
- * storage adapter once there is one. If validation changes, it changes in one place.
+ * One schema, used by the hero form and the profile questions. The database
+ * functions in supabase/schema.sql re-check the same rules on the way in.
  */
 
 /** The exact wording shown next to the consent box. Stored with every lead. */
-export const CONSENT_VERSION = '2026-09-v2';
+export const CONSENT_VERSION = '2026-10-v3';
 export const CONSENT_TEXT =
-  'I agree to receive Clean Ratio updates by email. I understand these details are not saved yet.';
+  'I agree to Clean Ratio storing these details and emailing me updates.';
 
 /** Checkboxes arrive as `true`, `"true"` or `"on"` depending on the form. */
 const looseBoolean = z.preprocess(
@@ -50,8 +50,9 @@ export type WaitlistPayload = z.output<typeof waitlistSchema>;
  * The Lifestyle & Recovery Profile: three pick-a-few questions and one scale.
  * Optional, and only offered to people who keep scrolling past the form.
  *
- * Option values are stable identifiers for whatever stores them later; labels
- * and lines can be reworded freely.
+ * Option values are stored as-is and checked again in supabase/schema.sql, so
+ * adding or renaming one means updating the allow-list there too. Labels and
+ * lines can be reworded freely.
  */
 export const PROFILE_QUESTIONS = [
   {

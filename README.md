@@ -20,14 +20,28 @@ npm run build
 npm run images
 ```
 
-## Waitlist status
+## Waitlist storage (Supabase)
 
-Name and email are validated in the browser. `src/lib/submitWaitlistEntry.ts`
-is the single adapter to replace when a database is selected
-(`submitWaitlistEntry` and `submitProfile`). It currently saves nothing; submitted details and the optional survey answers remain in
-React memory only. Visitors are told this in the form and privacy notice.
-There are no required environment variables; `.env.example` is intentionally
-empty apart from that note.
+Sign-ups and profiles are saved to Supabase through two database functions,
+`join_waitlist` and `save_profile`, called from `src/lib/submitWaitlistEntry.ts`.
+
+1. Run `supabase/schema.sql` once in the Supabase SQL editor (safe to re-run).
+2. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in `.env.local`
+   for local dev and in Vercel's environment variables for deploys (see
+   `.env.example`), then redeploy.
+
+The publishable key is public by design. It can only call the two functions:
+row level security is on with no policies, so it cannot read any row back.
+Never use the secret / service_role key here. Each function validates its
+input again and rate-limits per IP (10 sign-ups / 20 profile saves per 10
+minutes). A repeat sign-up with the same email updates the existing entry.
+
+See everyone in the Supabase Table Editor (`leads`, `profiles`) or run
+`select * from waitlist_export;` and download the CSV. To delete someone:
+`delete from leads where email = '…';` (their profile goes with it).
+
+If the profile options in `src/lib/schema.ts` change, update the allow-lists
+in `save_profile` to match.
 
 ## Images and type
 

@@ -7,7 +7,7 @@ import { answeredCount } from '../lib/reducer';
 import { useEdgeStep } from '../lib/useEdgeStep';
 import { track, trackOnce } from '../lib/analytics';
 import { STEP_HERO } from '../lib/content';
-import { submitProfile } from '../lib/submitWaitlistEntry';
+import { submitErrorMessage, submitProfile } from '../lib/submitWaitlistEntry';
 import {
   LIFESTYLE_OTHER_MAX,
   PROFILE_QUESTIONS,
@@ -78,7 +78,7 @@ export default function Questions({ active }: { active: boolean }) {
     dispatch({ type: 'ANSWERS_SENDING' });
     void (async () => {
       try {
-        await submitProfile(parsed.data);
+        await submitProfile(lead.id ?? '', parsed.data);
         track('answers_ready', {
           lifestyle: parsed.data.lifestyle.join(','),
           approach: parsed.data.approach.join(','),
@@ -88,7 +88,7 @@ export default function Questions({ active }: { active: boolean }) {
         dispatch({ type: 'ANSWERS_DONE' });
       } catch (err) {
         console.error('[profile] request failed', err);
-        setError('We could not save that just now. Please try again.');
+        setError(submitErrorMessage(err));
         dispatch({ type: 'ANSWERS_ERROR', message: 'network' });
       }
     })();
@@ -239,7 +239,7 @@ export default function Questions({ active }: { active: boolean }) {
             {saved ? (
               <p className={styles.status} role="status">
                 Thank you{lead.name ? `, ${lead.name}` : ''}. Your profile is
-                held for this visit — nothing has been saved yet.
+                saved with your place on the list.
               </p>
             ) : !joined ? (
               <p className={styles.status}>

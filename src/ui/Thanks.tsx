@@ -73,10 +73,6 @@ export default function Thanks({ active }: { active: boolean }) {
           </button>
         </Reveal>
 
-        <p className={styles.fine}>
-          This is a preview: details and answers stay in this visit only and
-          are not saved yet.
-        </p>
       </div>
     </section>
   );

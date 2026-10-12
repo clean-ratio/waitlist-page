@@ -74,14 +74,6 @@
   color: var(--ink);
 }
 
-.fine {
-  margin-top: 26px;
-  max-width: 44ch;
-  font-size: 11.5px;
-  color: var(--stone);
-  opacity: 0.75;
-}
-
 .link {
   font-size: 13px;
   color: var(--stone);

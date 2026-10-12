@@ -9,7 +9,7 @@ import { useStore } from '../lib/store';
 import { useEdgeStep } from '../lib/useEdgeStep';
 import { HERO, LOCATION_LINE } from '../lib/content';
 import { CONSENT_TEXT, fieldErrors, waitlistSchema } from '../lib/schema';
-import { submitWaitlistEntry } from '../lib/submitWaitlistEntry';
+import { submitErrorMessage, submitWaitlistEntry } from '../lib/submitWaitlistEntry';
 
 /**
  * The first screen, and the only one everybody sees: one slowly moving
@@ -188,17 +188,20 @@ function HeroForm({ active }: { active: boolean }) {
 
     void (async () => {
       try {
-        await submitWaitlistEntry(parsed.data.name, parsed.data.email);
+        // Honeypot filled: look exactly like a success, and save nothing.
+        const id = parsed.data.company?.trim()
+          ? ''
+          : await submitWaitlistEntry(parsed.data.name, parsed.data.email);
         dispatch({
           type: 'LEAD_DONE',
-          id: '',
+          id,
           name: parsed.data.name,
           email: parsed.data.email,
         });
         track('waitlist_ready');
       } catch (err) {
         console.error('[waitlist] request failed', err);
-        setErrors({ form: 'We could not add you just now. Please try again.' });
+        setErrors({ form: submitErrorMessage(err) });
         dispatch({ type: 'LEAD_ERROR', message: 'network' });
         track('waitlist_error');
       }
@@ -228,8 +231,8 @@ function HeroForm({ active }: { active: boolean }) {
               <Words text={`Thank you, _${state.lead.name}._`} delay={0.1} />
             </p>
             <p className={styles.joinedNote}>
-              We’ll write when the first rituals are ready. Your details have
-              not been saved yet — this is a preview.
+              We’ll write when the first rituals are ready. Tell us a little
+              more and we’ll shape them around you.
             </p>
             <button
               type="button"
