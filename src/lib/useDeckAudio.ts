@@ -10,7 +10,6 @@ import {
 import {
   IMAGE_CARDS,
   INTRO_TRACK,
-  STEP_GLASS,
   STEP_QUESTIONS,
   STEP_THANKS,
   imageCardAt,
@@ -49,7 +48,8 @@ export function useDeckAudio(): void {
   useEffect(() => watchVisibility(), []);
 
   // Howler must be in memory before the Submit click, because unlock has to be
-  // synchronous. Load it on the glass step, or on the first pointer down —
+  // synchronous. Load it on the first pointer down (which comes before any
+  // Submit click), or once past the hero —
   // whichever comes first, since Play on the panel is a second unlock path.
   useEffect(() => {
     const load = () => {
@@ -57,7 +57,7 @@ export function useDeckAudio(): void {
       primed.current = true;
       void prime();
     };
-    if (step >= STEP_GLASS) load();
+    if (step >= STEP_QUESTIONS) load();
     window.addEventListener('pointerdown', load, { once: true, passive: true });
     return () => window.removeEventListener('pointerdown', load);
   }, [step]);
@@ -87,18 +87,18 @@ export function useDeckAudio(): void {
       return;
     }
 
-    if (step === STEP_QUESTIONS) {
-      audio.duck(DUCK);
-      return;
-    }
-
     if (step === STEP_THANKS) {
       audio.fadeOutAndUnload();
       return;
     }
 
-    // Cover and glass: the music stops, and picks up again on the way forward.
-    // No second unlock is needed.
+    // Hero and questions: the music is quiet under the questions and stops on
+    // the hero, and picks up again on the way forward. No second unlock is
+    // needed.
+    if (step === STEP_QUESTIONS && audio.isUnlocked()) {
+      audio.duck(DUCK);
+      return;
+    }
     audio.pause();
   }, [step, audioUnlocked]);
 

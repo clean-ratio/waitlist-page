@@ -62,9 +62,14 @@ function parseWords(text: string): { word: string; italic: boolean }[] {
   // split with a capture group alternates plain, italic, plain, italic…
   text.split(/_([^_]+)_/g).forEach((chunk, index) => {
     const italic = index % 2 === 1;
-    for (const word of chunk.split(/\s+/)) {
-      if (word) out.push({ word, italic });
-    }
+    // Punctuation straight after an italic run ("_mostly_?") belongs to the
+    // word before it, not to a word of its own with a space in front.
+    const glued = !italic && index > 0 && out.length > 0 && /^\S/.test(chunk);
+    chunk.split(/\s+/).forEach((word, w) => {
+      if (!word) return;
+      if (w === 0 && glued) out[out.length - 1].word += word;
+      else out.push({ word, italic });
+    });
   });
   return out;
 }

@@ -6,11 +6,11 @@ import CardPlane, { createCardState, type CardState } from './CardPlane';
 import Backdrop from './Backdrop';
 import { useCardTextures } from './useCardTextures';
 import { DECK_STEPS } from '../lib/content';
+import type { DeckPhase } from '../lib/content';
 import {
   MAX_VISIBLE,
   TRANSITION,
-  exitProps,
-  slotProps,
+  targetProps,
   type DeckMetrics,
 } from '../lib/deckLayout';
 
@@ -18,10 +18,8 @@ type Props = {
   metrics: DeckMetrics;
   /** Index into DECK_STEPS. Clamped by the caller. */
   activeIndex: number;
-  /** True from the questions step on: the whole deck leaves down-right. */
-  exiting: boolean;
-  /** The visitor is already on the list, so the glass card is retired. */
-  retireGlass: boolean;
+  /** Waiting off-frame down-right, on screen, or gone up-left. */
+  phase: DeckPhase;
   reducedMotion: boolean;
   onStep: (slot: number) => void;
 };
@@ -29,8 +27,7 @@ type Props = {
 export default function Deck({
   metrics,
   activeIndex,
-  exiting,
-  retireGlass,
+  phase,
   reducedMotion,
   onStep,
 }: Props) {
@@ -45,25 +42,21 @@ export default function Deck({
     // fanning out from a pile on the first frame.
     cards.current = DECK_STEPS.map((_, i) => ({
       ...createCardState(),
-      ...slotProps(i - activeIndex, metrics),
+      ...targetProps(phase, i - activeIndex, metrics),
     }));
   }
   const states = cards.current;
 
   const slots = useMemo(
-    () =>
-      DECK_STEPS.map((step, i) =>
-        // A retired gate is treated as already passed, wherever the deck is.
-        // Otherwise it would sit in the upcoming stack as a blank card, in
-        // front of the photographs it is no longer standing between.
-        retireGlass && step.kind === 'glass' ? -1 : i - activeIndex,
-      ),
-    [activeIndex, retireGlass],
+    () => DECK_STEPS.map((_, i) => i - activeIndex),
+    [activeIndex],
   );
 
-  /** Where each card is headed this step: its slot, or off-frame on exit. */
-  const targetFor = (slot: number) =>
-    exiting ? exitProps(metrics) : slotProps(slot, metrics);
+  /** A whole-deck move: arriving from the questions, or leaving for the end. */
+  const travelling = phase !== 'in';
+
+  /** Where each card is headed this step. */
+  const targetFor = (slot: number) => targetProps(phase, slot, metrics);
 
   useGSAP(
     () => {
@@ -91,7 +84,7 @@ export default function Deck({
 
       const timeline = gsap.timeline({
         defaults: {
-          duration: exiting ? TRANSITION.exitDuration : TRANSITION.duration,
+          duration: travelling ? TRANSITION.exitDuration : TRANSITION.duration,
           ease: TRANSITION.ease,
         },
         // With frameloop="demand" the canvas only redraws when asked. Asking
@@ -103,7 +96,7 @@ export default function Deck({
       states.forEach((state, i) => {
         const slot = slots[i];
         const target = targetFor(slot);
-        const leaving = slot < 0 || exiting;
+        const leaving = slot < 0 || travelling;
         // 30 ms per slot. Enough that the deck feels like paper rather than
         // one rigid block; more than 50 ms and it starts to look sloppy.
         const at = Math.min(Math.abs(slot), MAX_VISIBLE) * TRANSITION.stagger;
@@ -134,7 +127,7 @@ export default function Deck({
             alpha: target.alpha,
             ease: leaving ? 'power3.in' : 'power1.out',
             duration: leaving
-              ? (exiting ? TRANSITION.exitDuration : TRANSITION.duration) * 0.85
+              ? (travelling ? TRANSITION.exitDuration : TRANSITION.duration) * 0.85
               : TRANSITION.duration * 0.6,
           },
           at,
@@ -142,7 +135,7 @@ export default function Deck({
 
         // The image inside the active card settles from 1.04 to 1.00. That
         // slow drift is most of what makes it feel expensive.
-        if (slot === 0 && !exiting) {
+        if (slot === 0 && !travelling) {
           timeline.fromTo(
             state,
             { zoom: 1.04 },
@@ -154,40 +147,35 @@ export default function Deck({
         }
       });
     },
-    { dependencies: [activeIndex, exiting, reducedMotion, metrics], revertOnUpdate: false },
+    { dependencies: [activeIndex, phase, reducedMotion, metrics], revertOnUpdate: false },
   );
 
   return (
     <>
       <Backdrop
-        activeId={
-          DECK_STEPS[activeIndex]?.kind === 'image'
-            ? (DECK_STEPS[activeIndex] as { id: string }).id
-            : null
-        }
+        activeId={phase === 'in' ? (DECK_STEPS[activeIndex]?.id ?? null) : null}
         textures={textures}
         reducedMotion={reducedMotion}
-        fogActive={activeIndex <= 1 && !exiting}
+        fogActive={false}
       />
 
       {DECK_STEPS.map((step, i) => {
         const slot = slots[i];
-        const image = step.kind === 'image' ? textures[step.id] : undefined;
 
         return (
           <CardPlane
-            key={step.kind === 'image' ? step.id : step.kind}
+            key={step.id}
             state={states[i]}
             slot={slot}
             cardW={metrics.cardW}
             cardH={metrics.cardH}
-            tone={step.kind === 'image' ? step.tone : 'light'}
-            glass={step.kind === 'glass'}
-            image={image}
-            focal={step.kind === 'image' ? step.focal : undefined}
+            tone={step.tone}
+            image={textures[step.id]}
+            focal={step.focal}
             flex={!reducedMotion}
-            onStep={onStep}
-            label={step.kind === 'image' ? step.title : step.kind}
+            // Off-screen cards are not clickable targets.
+            onStep={phase === 'in' ? onStep : () => undefined}
+            label={step.title}
           />
         );
       })}

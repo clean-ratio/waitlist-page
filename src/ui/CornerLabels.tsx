@@ -1,9 +1,7 @@
 import styles from './Overlay.module.css';
 import {
-  COVER,
   IMAGE_CARDS,
   LOCATION_LINE,
-  STEP_COVER,
   WORDMARK,
   imageCardAt,
 } from '../lib/content';
@@ -32,9 +30,6 @@ export default function CornerLabels({ step }: { step: number }) {
           <p className="u-label">
             {String(index).padStart(2, '0')} — {String(IMAGE_CARDS.length).padStart(2, '0')}
           </p>
-        )}
-        {step === STEP_COVER && (
-          <p className={`u-label ${styles.scrollHint}`}>{COVER.hint}</p>
         )}
       </div>
     </>

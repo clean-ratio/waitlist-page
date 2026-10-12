@@ -22,7 +22,15 @@
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  max-width: 34ch;
+  max-width: 40ch;
+}
+
+.note {
+  max-width: 38ch;
+  margin: 18px auto 0;
+  color: var(--stone);
+  font-size: 13px;
+  text-align: center;
 }
 
 .line {
@@ -38,7 +46,42 @@
   color: var(--stone);
 }
 
-/* Commerce appears here and nowhere else, and even here it is one link. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 14px 26px;
+  margin-top: 8px;
+}
+
+.cta {
+  padding: 15px 30px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  font: var(--font-label-weight) 12px/1 var(--font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  transition:
+    background 240ms ease,
+    color 240ms ease;
+}
+
+.cta:hover {
+  background: transparent;
+  color: var(--ink);
+}
+
+.fine {
+  margin-top: 26px;
+  max-width: 44ch;
+  font-size: 11.5px;
+  color: var(--stone);
+  opacity: 0.75;
+}
+
 .link {
   font-size: 13px;
   color: var(--stone);

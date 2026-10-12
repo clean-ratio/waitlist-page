@@ -1,15 +1,14 @@
 import { useEffect } from 'react';
 import styles from './FallbackDeck.module.css';
-import { DECK_STEPS, imageCardAt } from '../lib/content';
-import { TRANSITION, exitProps, slotOrder, slotProps } from '../lib/deckLayout';
+import { DECK_STEPS, imageCardAt, type DeckPhase } from '../lib/content';
+import { TRANSITION, slotOrder, targetProps } from '../lib/deckLayout';
 import type { DeckMetrics } from '../lib/deckLayout';
 import { track } from '../lib/analytics';
 
 type Props = {
   metrics: DeckMetrics;
   activeIndex: number;
-  exiting: boolean;
-  retireGlass: boolean;
+  phase: DeckPhase;
   step: number;
   onStep: (slot: number) => void;
 };
@@ -17,8 +16,7 @@ type Props = {
 export default function FallbackDeck({
   metrics,
   activeIndex,
-  exiting,
-  retireGlass,
+  phase,
   step,
   onStep,
 }: Props) {
@@ -39,20 +37,18 @@ export default function FallbackDeck({
       />
 
       {DECK_STEPS.map((deckStep, i) => {
-        // A retired gate counts as already passed, wherever the deck is.
-        const slot =
-          retireGlass && deckStep.kind === 'glass' ? -1 : i - activeIndex;
-        const props = exiting ? exitProps(metrics) : slotProps(slot, metrics);
-        const leaving = slot < 0 || exiting;
-        const card = deckStep.kind === 'image' ? deckStep : null;
+        const slot = i - activeIndex;
+        const props = targetProps(phase, slot, metrics);
+        const leaving = slot < 0 || phase !== 'in';
+        const card = deckStep;
 
         return (
           <div
-            key={deckStep.kind === 'image' ? deckStep.id : deckStep.kind}
+            key={deckStep.id}
             className={[
               styles.card,
-              card?.tone === 'dark' ? styles.cardDark : '',
-              slot !== 0 && props.alpha > 0 ? styles.clickable : '',
+              card.tone === 'dark' ? styles.cardDark : '',
+              phase === 'in' && slot !== 0 && props.alpha > 0 ? styles.clickable : '',
             ]
               .filter(Boolean)
               .join(' ')}
@@ -73,11 +69,10 @@ export default function FallbackDeck({
                 zIndex: slotOrder(slot),
               } as React.CSSProperties
             }
-            onClick={slot === 0 ? undefined : () => onStep(slot)}
+            onClick={slot === 0 || phase !== 'in' ? undefined : () => onStep(slot)}
             aria-hidden="true"
           >
-            {card ? (
-              <img
+            <img
                 className={styles.image}
                 src={card.src}
                 alt=""
@@ -87,13 +82,10 @@ export default function FallbackDeck({
                     '--focal-y': `${card.focal?.y ?? 50}%`,
                   } as React.CSSProperties
                 }
-                // Cards 1 and 2 are needed the moment the form is submitted.
-                loading={i <= 3 ? 'eager' : 'lazy'}
+                // The first cards are needed the moment the deck arrives.
+                loading={i <= 1 ? 'eager' : 'lazy'}
                 decoding="async"
               />
-            ) : deckStep.kind === 'glass' ? (
-              <div className={styles.glass} />
-            ) : null}
           </div>
         );
       })}

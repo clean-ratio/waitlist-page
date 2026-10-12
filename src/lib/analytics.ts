@@ -1,6 +1,5 @@
 /**
- * Funnel events. The page exists to collect sign-ups, so the drop between
- * glass_view and waitlist_submit is the number that matters from week one.
+ * Funnel events. The waitlist adapter is intentionally not connected yet.
  *
  * Works with Plausible or PostHog if either is on the page; otherwise it is a
  * no-op (and a console line in dev). No vendor script is bundled.
@@ -9,13 +8,12 @@
 type Props = Record<string, string | number | boolean | undefined>;
 
 export type AnalyticsEvent =
-  | 'cover_view'
-  | 'glass_view'
-  | 'waitlist_submit'
+  | 'hero_view'
+  | 'waitlist_ready'
   | 'waitlist_error'
   | 'card_view'
   | 'questions_view'
-  | 'answers_submit'
+  | 'answers_ready'
   | 'thanks_view'
   | 'audio_unlocked'
   | 'webgl_fallback';

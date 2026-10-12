@@ -1,1 +1,9 @@
 .env*
+node_modules
+dist
+.vercel
+artifacts
+.tmp
+*.mp4
+*.pdf
+tsconfig.tsbuildinfo

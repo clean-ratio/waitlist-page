@@ -6,6 +6,7 @@ import { useStore } from '../lib/store';
 import { canAdvance } from '../lib/reducer';
 import {
   INTRO_TRACK,
+  STEP_HERO,
   STEP_QUESTIONS,
   STEP_THANKS,
   imageCardAt,
@@ -16,8 +17,7 @@ import {
  *
  * The panel holds no state of its own: it reads the step and the sound flag,
  * and its buttons dispatch the same actions a scroll does. So it can never
- * show a different item from the card in the centre, and Next cannot get
- * around the email gate.
+ * show a different item from the card in the centre.
  */
 export default function NowPlaying({ isPhone }: { isPhone: boolean }) {
   const { state, dispatch } = useStore();
@@ -26,7 +26,8 @@ export default function NowPlaying({ isPhone }: { isPhone: boolean }) {
 
   const card = imageCardAt(step);
   const collapsed = step === STEP_QUESTIONS;
-  const leaving = step === STEP_THANKS;
+  // Off the hero entirely: the form owns the first screen.
+  const leaving = step === STEP_HERO || step === STEP_THANKS;
 
   // Content crossfades 400 ms after the deck lands, not during the move.
   const [shown, setShown] = useState(card);
@@ -152,8 +153,6 @@ export default function NowPlaying({ isPhone }: { isPhone: boolean }) {
             className={styles.button}
             type="button"
             aria-label="Next card"
-            // Still blocked by the glass and questions gates: a skip button
-            // must not get around the email gate.
             disabled={!canAdvance(state)}
             onClick={() => dispatch({ type: 'NEXT' })}
           >

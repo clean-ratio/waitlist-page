@@ -7,11 +7,11 @@ import type { CardTexture } from './useCardTextures';
 import { TRANSITION } from '../lib/deckLayout';
 
 type Props = {
-  /** The active image card, or null on the cover, glass and exit steps. */
+  /** The active image card, or null while the deck is off screen. */
   activeId: string | null;
   textures: Record<string, CardTexture>;
   reducedMotion: boolean;
-  /** The fog drifts behind the cover and the glass card, and nowhere else. */
+  /** Drifting fog behind the deck. Currently unused: the hero has its own mist. */
   fogActive: boolean;
 };
 

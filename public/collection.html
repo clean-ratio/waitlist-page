@@ -3,29 +3,142 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#edf0e8" />
+    <meta name="description" content="Explore the nature-led Cooling, Muscle Recovery, and Skin Recovery collections from Clean Ratio." />
     <title>The collection — Clean Ratio</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/typography.css" />
     <style>
-      :root { color-scheme: light }
-      body {
-        margin: 0; min-height: 100svh; display: grid; place-items: center;
-        padding: 24px; text-align: center;
-        background: #f2efea; color: #1a1916;
-        font: var(--font-body-weight) 15px/1.7 var(--font-body);
-        font-synthesis: none;
+      :root {
+        color-scheme: light;
+        --bone: #edf0e8;
+        --paper: #f8f7f1;
+        --forest: #1a271f;
+        --moss: #4d5d51;
+        --clay: #a75d48;
+        --line: rgb(26 39 31 / 0.18);
       }
-      h1 { font: var(--font-display-weight) 44px/1.3 var(--font-display); letter-spacing: 0; margin: 0 0 10px }
-      h1 em { font-style: italic }
-      p { margin: 0 0 20px; color: #6e6a63; font-size: 13px }
-      a { color: inherit }
+      * { box-sizing: border-box }
+      body {
+        margin: 0;
+        background: var(--bone);
+        color: var(--forest);
+        font: 400 15px/1.65 'Manrope', 'Segoe UI', sans-serif;
+      }
+      .page { width: min(1240px, 100%); margin: 0 auto; padding: 24px clamp(20px, 5vw, 72px) 72px }
+      .top { display: flex; justify-content: space-between; align-items: center; min-height: 44px; border-bottom: 1px solid var(--line); padding-bottom: 16px }
+      .brand, .back { color: inherit; text-decoration: none }
+      .brand { font-size: 11px; letter-spacing: .16em; font-weight: 700 }
+      .back { font-size: 12px; color: var(--moss); text-underline-offset: 4px }
+      .intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, .8fr); gap: clamp(28px, 6vw, 80px); align-items: end; padding: clamp(48px, 9vw, 112px) 0 38px }
+      .eyebrow { margin: 0 0 16px; color: var(--moss); font-size: 10px; letter-spacing: .17em; text-transform: uppercase }
+      h1 { max-width: 10ch; margin: 0; font: 400 clamp(42px, 6vw, 76px)/1.04 var(--font-display); letter-spacing: 0 }
+      .intro-copy { max-width: 38ch; margin: 0 0 6px; color: var(--moss); font-size: 15px }
+      .filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 18px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line) }
+      .filter { min-height: 40px; padding: 9px 14px; border: 1px solid var(--line); border-radius: 2px; background: transparent; color: var(--forest); font: inherit; font-size: 12px; cursor: pointer; transition: background 180ms ease, color 180ms ease, border-color 180ms ease }
+      .filter[aria-pressed="true"] { border-color: var(--forest); background: var(--forest); color: var(--paper) }
+      .filter:focus-visible, a:focus-visible { outline: 2px solid var(--clay); outline-offset: 3px }
+      .count { margin: 24px 0 14px; color: var(--moss); font-size: 11px; letter-spacing: .08em }
+      .gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(10px, 1.5vw, 20px) }
+      .tile { min-width: 0; margin: 0 0 14px; animation: appear 500ms both }
+      .tile[hidden] { display: none }
+      .tile img { display: block; width: 100%; height: auto; max-height: 520px; object-fit: contain; background: var(--paper) }
+      .tile figcaption { display: flex; justify-content: space-between; gap: 12px; padding-top: 10px; color: var(--moss); font-size: 10px; line-height: 1.4 }
+      .tile figcaption span:last-child { flex: 0 0 auto; text-align: right }
+      .empty, .load-error { color: var(--moss); padding: 36px 0 }
+      footer { display: flex; justify-content: space-between; gap: 20px; margin-top: 50px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--moss); font-size: 10px; letter-spacing: .1em; text-transform: uppercase }
+      footer a { color: inherit; text-underline-offset: 4px }
+      @keyframes appear { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+      @media (max-width: 700px) {
+        .intro { grid-template-columns: 1fr; gap: 18px; padding-top: 56px }
+        .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px }
+        footer { flex-direction: column }
+      }
+      @media (max-width: 420px) {
+        .gallery { grid-template-columns: 1fr }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important }
+      }
     </style>
   </head>
   <body>
-    <main>
-      <h1>A moment <em>to pause.</em></h1>
-      <p>Quiet places, familiar sounds, and a little room to be.</p>
-      <p><a href="/">Back</a></p>
+    <main class="page">
+      <header class="top">
+        <a class="brand" href="/">CLEAN RATIO</a>
+        <a class="back" href="/">Return to the beginning</a>
+      </header>
+      <section class="intro" aria-labelledby="collection-title">
+        <div>
+          <p class="eyebrow">Nature, in balance</p>
+          <h1 id="collection-title">A slower kind of renewal.</h1>
+        </div>
+        <p class="intro-copy">Three recovery rituals, shaped by elemental color, quiet landscapes, and the natural rhythm of restoration.</p>
+      </section>
+      <nav class="filters" aria-label="Filter collection">
+        <button class="filter" type="button" data-filter="all" aria-pressed="true">All</button>
+        <button class="filter" type="button" data-filter="Cooling" aria-pressed="false">Cooling</button>
+        <button class="filter" type="button" data-filter="Muscle Recovery" aria-pressed="false">Muscle recovery</button>
+        <button class="filter" type="button" data-filter="Skin Recovery" aria-pressed="false">Skin recovery</button>
+      </nav>
+      <p class="count" id="collection-count" role="status" aria-live="polite">The collection is opening…</p>
+      <section class="gallery" id="gallery" aria-label="Collection images"></section>
+      <noscript><p class="load-error">Enable JavaScript to browse the image collection.</p></noscript>
+      <footer>
+        <span>Clean Ratio · Recovery, naturally</span>
+        <a href="/privacy.html">Privacy</a>
+      </footer>
     </main>
+    <script type="module">
+      const gallery = document.querySelector('#gallery');
+      const count = document.querySelector('#collection-count');
+      const filters = [...document.querySelectorAll('[data-filter]')];
+      let images = [];
+      let selected = 'all';
+
+      function render() {
+        const visible = images.filter((image) => selected === 'all' || image.category === selected);
+        const fragment = document.createDocumentFragment();
+        for (const image of visible) {
+          const figure = document.createElement('figure');
+          figure.className = 'tile';
+          const photo = document.createElement('img');
+          photo.src = image.src;
+          photo.alt = image.alt;
+          photo.width = image.width;
+          photo.height = image.height;
+          photo.loading = 'lazy';
+          photo.decoding = 'async';
+          const caption = document.createElement('figcaption');
+          const label = document.createElement('span');
+          label.textContent = `${image.category} · ${image.variant}`;
+          const dimensions = document.createElement('span');
+          dimensions.textContent = `${image.width} × ${image.height}`;
+          caption.append(label, dimensions);
+          figure.append(photo, caption);
+          fragment.append(figure);
+        }
+        gallery.replaceChildren(fragment);
+        count.textContent = `${visible.length} images · ${selected === 'all' ? 'All collections' : selected}`;
+      }
+
+      for (const button of filters) {
+        button.addEventListener('click', () => {
+          selected = button.dataset.filter;
+          for (const item of filters) item.setAttribute('aria-pressed', String(item === button));
+          render();
+        });
+      }
+
+      try {
+        const response = await fetch('/images/collection/manifest.json');
+        if (!response.ok) throw new Error('Collection unavailable');
+        ({ images } = await response.json());
+        render();
+      } catch {
+        count.textContent = 'The collection could not be loaded just now.';
+        count.className = 'load-error';
+      }
+    </script>
   </body>
 </html>

@@ -1,96 +1,126 @@
-/**
- * Asset prep for public/images.
- *
- * Writes, for every source image:
- *   - a 1600 px WebP for the WebGL textures
- *   - a 600 px JPEG for the HTML fallback deck
- *
- * Both are cropped to 4:5 and given a warm, slightly low-contrast grade, so
- * the six read as one shoot. Heavy JPEGs are the most common reason this
- * effect stutters — the script warns about anything over 600 KB.
- *
- *   npm run images
- */
-import { mkdir, readdir, stat, writeFile } from 'node:fs/promises';
-import { join, parse } from 'node:path';
+/** Convert the supplied recovery library to responsive, GPU-friendly WebP. */
+import { mkdir, readdir, writeFile } from 'node:fs/promises';
+import { join, relative, sep } from 'node:path';
 import sharp from 'sharp';
 
-const SOURCE = 'public/images';
-const OUT_LARGE = 'public/images/1600';
-const OUT_SMALL = 'public/images/600';
-const MAX_BYTES = 600 * 1024;
-const ASPECT = 4 / 5;
+const SOURCE = 'artifacts/source-images/new_images/Images';
+const OUTPUT = 'public/images/collection';
+const MAX_DIMENSION = 1600;
+const HERO_OUTPUT = 'public/images/hero';
+const HERO_SOURCE = [
+  'Cooling',
+  'Blue',
+  'u7982621818_A_real_glacier_landscape_photographed_in_soft_ove_434dea55-a114-47d6-a1e4-ff610a21d837_0.png',
+];
 
-const grade = (pipeline) =>
-  pipeline
-    // Warm, and a touch flatter than the original.
-    .modulate({ saturation: 0.94, brightness: 1.02 })
-    .tint({ r: 255, g: 250, b: 243 })
-    .linear(0.94, 8);
+async function imageFiles(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...(await imageFiles(path)));
+    else if (/\.(jpe?g|png|webp)$/i.test(entry.name)) files.push(path);
+  }
+
+  return files.sort();
+}
+
+function slug(path) {
+  return relative(SOURCE, path)
+    .replace(/\.[^.]+$/, '')
+    .split(sep)
+    .join('-')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function imageInfo(path, dimensions) {
+  const parts = relative(SOURCE, path).split(sep);
+  const category = parts[0];
+  const variant = parts.length > 2 ? parts[1] : category;
+  const label = parts.at(-1).replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ');
+  const sourceNumber = label.match(/\d+/)?.[0];
+
+  return {
+    src: `/images/collection/${slug(path)}.webp`,
+    category,
+    variant,
+    title: `${category} / ${variant}${sourceNumber ? ` / ${sourceNumber}` : ''}`,
+    alt: `${variant} nature-inspired imagery from the Clean Ratio ${category.toLowerCase()} collection.`,
+    ...dimensions,
+  };
+}
 
 async function main() {
-  await mkdir(OUT_LARGE, { recursive: true });
-  await mkdir(OUT_SMALL, { recursive: true });
-
-  const files = (await readdir(SOURCE)).filter((f) => /\.(jpe?g|png|webp)$/i.test(f));
+  await mkdir(OUTPUT, { recursive: true });
+  const files = await imageFiles(SOURCE);
   if (files.length === 0) {
     console.error(`No images found in ${SOURCE}`);
     process.exitCode = 1;
     return;
   }
 
-  const report = [];
+  const images = [];
+  let totalBytes = 0;
 
-  for (const file of files) {
-    const { name } = parse(file);
-    const input = join(SOURCE, file);
-    const { size } = await stat(input);
+  for (const input of files) {
+    const output = join(OUTPUT, `${slug(input)}.webp`);
+    const result = await sharp(input)
+      .rotate()
+      .resize({
+        width: MAX_DIMENSION,
+        height: MAX_DIMENSION,
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .webp({ quality: 80, effort: 5 })
+      .toFile(output);
+    const metadata = await sharp(output).metadata();
+    const image = imageInfo(input, {
+      width: metadata.width,
+      height: metadata.height,
+    });
 
-    if (size > MAX_BYTES) {
-      console.warn(
-        `  ${file} is ${(size / 1024).toFixed(0)} KB — keep sources under 600 KB.`,
-      );
-    }
-
-    const large = join(OUT_LARGE, `${name}.webp`);
-    await grade(
-      sharp(input).resize({
-        width: Math.round(1600 * ASPECT),
-        height: 1600,
-        fit: 'cover',
-        position: 'attention',
-      }),
-    )
-      .webp({ quality: 82, effort: 5 })
-      .toFile(large);
-
-    const small = join(OUT_SMALL, `${name}.jpg`);
-    await grade(
-      sharp(input).resize({
-        width: Math.round(600 * ASPECT),
-        height: 600,
-        fit: 'cover',
-        position: 'attention',
-      }),
-    )
-      .jpeg({ quality: 78, progressive: true, mozjpeg: true })
-      .toFile(small);
-
-    const [l, s] = await Promise.all([stat(large), stat(small)]);
-    report.push({ file, webp: l.size, jpeg: s.size });
-    console.log(
-      `  ${file} → ${(l.size / 1024).toFixed(0)} KB webp, ${(s.size / 1024).toFixed(0)} KB jpeg`,
-    );
+    images.push({ ...image, bytes: result.size });
+    totalBytes += result.size;
   }
 
   await writeFile(
-    join(SOURCE, 'manifest.json'),
-    JSON.stringify({ generated: new Date().toISOString(), images: report }, null, 2),
+    join(OUTPUT, 'manifest.json'),
+    JSON.stringify({ images }, null, 2),
   );
 
-  const total = report.reduce((sum, r) => sum + r.webp, 0);
-  console.log(`\n  ${report.length} images, ${(total / 1024).toFixed(0)} KB of textures.`);
-  console.log(`  Point lib/content.ts at ${OUT_LARGE}/<name>.webp when you are happy.`);
+  await sharp(join(SOURCE, 'Cooling', 'pink salt.png'))
+    .rotate()
+    .resize(1200, 630, { fit: 'cover', position: 'attention' })
+    .webp({ quality: 82, effort: 5 })
+    .toFile('public/og.webp');
+
+  // The hero is one photograph, cut twice: a wide band for desktop and the
+  // full portrait frame for phones. Cropped from the 1904 × 2544 original, not
+  // from the 1600 px WebP, so the wide cut is not upscaled on a large screen.
+  await mkdir(HERO_OUTPUT, { recursive: true });
+  const hero = sharp(join(SOURCE, ...HERO_SOURCE)).rotate();
+  const { width: heroW = 0, height: heroH = 0 } = await hero.metadata();
+  const wideH = Math.round((heroW * 9) / 16);
+  await hero
+    .clone()
+    // Centred on the ice arch, which sits a little under half way down.
+    .extract({ left: 0, top: Math.round(heroH * 0.44 - wideH / 2), width: heroW, height: wideH })
+    .webp({ quality: 78, effort: 5 })
+    .toFile(join(HERO_OUTPUT, 'glacier-wide.webp'));
+  await hero
+    .clone()
+    .resize({ width: 1200, height: 1600, fit: 'cover', position: 'centre' })
+    .webp({ quality: 78, effort: 5 })
+    .toFile(join(HERO_OUTPUT, 'glacier-tall.webp'));
+
+  console.log(
+    `Optimized ${images.length} images to ${(totalBytes / 1024 / 1024).toFixed(1)} MB of WebP.`,
+  );
 }
 
 main().catch((err) => {

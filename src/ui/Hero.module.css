@@ -1,0 +1,469 @@
+/*
+ * The hero is a full-screen panel above the deck. Stepping on slides it up
+ * and out like a page scroll; stepping back brings it down again.
+ */
+.hero {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-panel);
+  overflow: hidden;
+  background: #9fc3d1; /* the glacier's own blue, while the photo loads */
+  color: #f7faf9;
+  transform: translate3d(0, 0, 0);
+  transition: transform 1s var(--step-ease);
+}
+
+.away {
+  transform: translate3d(0, -100%, 0);
+  pointer-events: none;
+}
+
+/* ---------- the scenery ---------- */
+
+.media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.media picture {
+  display: contents;
+}
+
+.still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 45%;
+}
+
+/*
+ * A long, slow camera take: a push-in with a slight pan, then back again.
+ * Slow enough that you notice it has moved rather than see it moving.
+ */
+.drift {
+  transform-origin: 52% 48%;
+  animation: drift 38s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes drift {
+  from {
+    transform: scale(1.14) translate3d(-1.4%, 0.8%, 0);
+  }
+  to {
+    transform: scale(1.03) translate3d(1.2%, -0.6%, 0);
+  }
+}
+
+/* Light moving across the water. */
+.shimmer {
+  position: absolute;
+  inset: 40% -30% -10%;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgb(255 255 255 / 0.22) 45%,
+    transparent 60%
+  );
+  mix-blend-mode: soft-light;
+  animation: shimmer 14s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translate3d(-35%, 0, 0);
+    opacity: 0;
+  }
+  30%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(35%, 0, 0);
+    opacity: 0;
+  }
+}
+
+/* Two soft banks of cold air drifting through. */
+.mist {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(38% 22% at 22% 62%, rgb(255 255 255 / 0.32), transparent 70%),
+    radial-gradient(30% 18% at 78% 40%, rgb(235 246 250 / 0.26), transparent 70%);
+  filter: blur(30px);
+  animation: mist 30s ease-in-out infinite alternate;
+}
+
+@keyframes mist {
+  from {
+    transform: translate3d(-4%, 1%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(5%, -2%, 0) scale(1.1);
+  }
+}
+
+/*
+ * The image is pale ice, so white type needs help. A deep-water tint under
+ * the copy column and along the bottom; the arch in the middle stays clear.
+ */
+.shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(9 33 43 / 0.62) 0%, rgb(9 33 43 / 0.28) 38%, transparent 62%),
+    linear-gradient(0deg, rgb(9 33 43 / 0.5) 0%, transparent 32%),
+    linear-gradient(180deg, rgb(9 33 43 / 0.35) 0%, transparent 18%);
+}
+
+.paused .drift,
+.paused .shimmer,
+.paused .mist {
+  animation-play-state: paused;
+}
+
+/* ---------- layout ---------- */
+
+.scroller {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  padding: max(var(--edge), env(safe-area-inset-top)) clamp(16px, 4vw, 56px)
+    max(var(--edge), env(safe-area-inset-bottom));
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Doubled class: beats the global .u-label colour, which is for the page. */
+.est.est {
+  color: rgb(247 250 249 / 0.85);
+}
+
+.body {
+  flex: 1 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 400px);
+  align-items: center;
+  gap: clamp(32px, 6vw, 96px);
+  padding-block: clamp(28px, 6vh, 64px);
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.copy {
+  text-shadow: 0 1px 24px rgb(9 33 43 / 0.35);
+}
+
+.kicker.kicker {
+  color: rgb(247 250 249 / 0.9);
+  margin-bottom: 18px;
+}
+
+.line {
+  font-size: clamp(46px, 6.4vw, 104px);
+  line-height: 1.02;
+  max-width: 11ch;
+}
+
+.description {
+  margin-top: 20px;
+  max-width: 36ch;
+  font-size: clamp(15px, 1.3vw, 18px);
+  line-height: 1.6;
+  color: rgb(247 250 249 / 0.9);
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+}
+
+.hint {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: rgb(247 250 249 / 0.9);
+}
+
+.hint :global(.u-label) {
+  color: inherit;
+}
+
+/* A line that keeps falling, like a slow drip. */
+.hintLine {
+  position: relative;
+  width: 1px;
+  height: 34px;
+  overflow: hidden;
+  background: rgb(247 250 249 / 0.25);
+}
+
+.hintLine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(247 250 249 / 0.95);
+  animation: fall 2.4s var(--step-ease) infinite;
+}
+
+@keyframes fall {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* ---------- the form card ---------- */
+
+.card {
+  position: relative;
+  border-radius: 4px;
+  color: var(--ink);
+  padding: clamp(22px, 2.4vw, 32px);
+  text-shadow: none;
+}
+
+.card :global(.u-label) {
+  color: var(--stone-on-glass);
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+}
+
+.formHead {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.formTitle {
+  font-size: clamp(30px, 2.6vw, 38px);
+}
+
+.formSub {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--stone-on-glass);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* No boxes: one hairline underline, a tiny label above. */
+.input {
+  width: 100%;
+  min-width: 0;
+  appearance: none;
+  border: 0;
+  border-bottom: 1px solid rgb(26 25 22 / 0.28);
+  background: transparent;
+  color: var(--ink);
+  font: var(--font-body-weight) 17px/1.5 var(--font-body); /* 16px+ stops iOS zooming */
+  padding: 6px 2px;
+  border-radius: 0;
+  transition:
+    border-color 220ms ease,
+    background 220ms ease;
+}
+
+.input:hover {
+  border-bottom-color: rgb(26 25 22 / 0.45);
+}
+
+.input:focus {
+  outline: none;
+  border-bottom-color: var(--ink);
+  background: rgb(255 255 255 / 0.35);
+}
+
+.input:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 4px;
+}
+
+.input[aria-invalid='true'] {
+  border-bottom-color: rgb(140 40 30 / 0.65);
+}
+
+.error {
+  font: var(--font-body-weight) 12.5px/1.4 var(--font-body);
+  color: rgb(120 34 26);
+}
+
+.consent {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--stone-on-glass);
+  cursor: pointer;
+}
+
+.consent input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin: 2px 0 0;
+  border: 1px solid rgb(26 25 22 / 0.3);
+  background: rgb(255 255 255 / 0.5);
+  border-radius: 1px;
+  cursor: pointer;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease;
+}
+
+.consent input:checked {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.consent a {
+  color: var(--stone-on-glass);
+  text-underline-offset: 3px;
+}
+
+.submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 4px;
+  padding: 12px 16px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  font: var(--font-label-weight) 11.5px/1.2 var(--font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  transition:
+    background 240ms ease,
+    color 240ms ease;
+}
+
+.submit:hover:not(:disabled) {
+  background: transparent;
+  color: var(--ink);
+}
+
+.submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.submitArrow {
+  transition: transform 240ms var(--step-ease);
+}
+
+.submit:hover:not(:disabled) .submitArrow {
+  transform: translateX(3px);
+}
+
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.joined {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.joinedLine {
+  font-size: clamp(32px, 3vw, 44px);
+}
+
+.joinedNote {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--stone-on-glass);
+  margin-bottom: 6px;
+}
+
+/* ---------- smaller screens ---------- */
+
+@media (max-width: 900px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: end;
+    gap: 28px;
+    max-width: 560px;
+  }
+
+  .shade {
+    background:
+      linear-gradient(0deg, rgb(9 33 43 / 0.7) 0%, rgb(9 33 43 / 0.25) 55%, transparent 80%),
+      linear-gradient(180deg, rgb(9 33 43 / 0.4) 0%, transparent 22%);
+  }
+}
+
+@media (max-width: 640px) {
+  .line {
+    font-size: clamp(40px, 12vw, 56px);
+  }
+
+  .description {
+    margin-top: 12px;
+  }
+
+  .fields {
+    gap: 12px;
+  }
+
+  .footer {
+    padding-top: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero {
+    transition-duration: 0.3s;
+  }
+
+  .drift,
+  .shimmer,
+  .mist,
+  .hintLine::after {
+    animation: none;
+  }
+
+  .drift {
+    transform: scale(1.04);
+  }
+}

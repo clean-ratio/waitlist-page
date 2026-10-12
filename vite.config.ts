@@ -1,9 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import devApi from './scripts/dev-api';
 
 export default defineConfig({
-  plugins: [react(), devApi()],
+  plugins: [react()],
   build: {
     target: 'es2022',
     // The three chunk is knowingly large and knowingly lazy: it is not on the

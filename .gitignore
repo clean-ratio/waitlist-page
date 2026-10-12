@@ -10,3 +10,13 @@ tsconfig.tsbuildinfo
 public/images/1600
 public/images/600
 public/images/manifest.json
+artifacts/source-images/
+
+.vercel
+.env*
+
+# Local working files: never part of the site
+artifacts/
+.tmp/
+*.mp4
+*.pdf

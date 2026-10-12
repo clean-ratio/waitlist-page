@@ -10,7 +10,6 @@ import {
   type RefObject,
 } from 'react';
 import { initialState, reducer, type Action, type State } from './reducer';
-import { readLead, writeLead } from './lead';
 
 type Store = {
   state: State;
@@ -24,34 +23,9 @@ type Store = {
 
 const StoreContext = createContext<Store | null>(null);
 
-/**
- * Picks up a sign-up from earlier in the visit, so a reload does not put the
- * gate back. Runs once, before the first render.
- */
-function boot(): State {
-  const remembered = readLead();
-  if (!remembered) return initialState;
-  return {
-    ...initialState,
-    lead: {
-      id: remembered.id,
-      name: remembered.name,
-      already: true,
-      status: 'done',
-    },
-  };
-}
-
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, undefined, boot);
+  const [state, dispatch] = useReducer(reducer, initialState);
   const stateRef = useRef(state);
-
-  // Remember the sign-up for the rest of the visit.
-  useEffect(() => {
-    if (state.lead.status === 'done' && state.lead.name) {
-      writeLead({ id: state.lead.id ?? '', name: state.lead.name });
-    }
-  }, [state.lead.status, state.lead.id, state.lead.name]);
 
   useEffect(() => {
     stateRef.current = state;

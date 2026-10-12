@@ -1,7 +1,7 @@
 /*
- * The deck has gone, and what is left is a quiet page with two questions on
- * it. Not a form: Q1 is a plate of tiles you pick from, Q2 is a single line
- * you place yourself on.
+ * The hero has slid away, and what is left is a quiet page of questions. Not
+ * a form: plates of tiles you pick from, and a single line you place yourself
+ * on. The deck waits off-frame, down and to the right, until you move on.
  */
 .section {
   position: fixed;
@@ -12,7 +12,7 @@
   transition: opacity 500ms ease;
 }
 
-/* Fades in on the same timeline as the deck exit, starting at 0.4 s. */
+/* Fades in as the hero clears the top of the screen. */
 .visible {
   opacity: 1;
   pointer-events: auto;
@@ -33,6 +33,30 @@
   display: flex;
   flex-direction: column;
   gap: clamp(56px, 9vh, 96px);
+}
+
+/* ---------- intro ---------- */
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.title {
+  font-size: clamp(48px, 6vw, 80px);
+  line-height: 1.04;
+}
+
+.lede {
+  max-width: 46ch;
+  color: var(--stone);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.kickerLabel {
+  color: var(--stone);
 }
 
 /* A thin progress rail at the very top of the page. */
@@ -125,21 +149,6 @@
 .tile:hover {
   border-color: rgb(26 25 22 / 0.28);
   background: rgb(255 255 255 / 0.75);
-}
-
-.tile[data-vibe='mint'] {
-  border-color: #b4cec0;
-  background: #e4eee8;
-}
-
-.tile[data-vibe='butter'] {
-  border-color: #d8c58f;
-  background: #f2e8c8;
-}
-
-.tile[data-vibe='sky'] {
-  border-color: #b8c5df;
-  background: #e5eaf3;
 }
 
 /*
@@ -367,8 +376,40 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
-  min-height: 56px;
+  gap: 18px;
+  padding-top: 28px;
+  border-top: 1px solid var(--hairline);
+}
+
+.status {
+  color: var(--stone);
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 48ch;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 28px;
+}
+
+.skip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: var(--font-label-weight) 12px/1 var(--font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--stone);
+  border-bottom: 1px solid var(--hairline);
+  padding: 4px 0;
+  transition: color 200ms ease;
+}
+
+.skip:hover {
+  color: var(--ink);
 }
 
 .send {
@@ -386,6 +427,11 @@
   transition:
     background 240ms ease,
     color 240ms ease;
+}
+
+.send:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .send:hover:not(:disabled) {

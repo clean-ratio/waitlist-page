@@ -85,12 +85,35 @@ export function slotProps(slot: number, m: DeckMetrics): SlotProps {
 }
 
 /**
- * The deck handing over to the questions step: whatever is still on screen
+ * The deck handing over to the closing step: whatever is still on screen
  * follows the cards that already left, up the same diagonal.
  */
 export function exitProps(m: DeckMetrics): SlotProps {
   const away = departure(m);
   return { x: away.x, y: away.y, scale: 0.9, dim: 0.92, alpha: 0 };
+}
+
+/**
+ * Before the deck is reached (hero and questions), every card waits the same
+ * distance off-frame in the other direction, down and to the right, so the
+ * stack arrives along the diagonal it will leave by. `slot` keeps the stack in
+ * order on the way in.
+ */
+export function arrivalProps(slot: number, m: DeckMetrics): SlotProps {
+  const away = departure(m);
+  const rest = slotProps(Math.max(0, slot), m);
+  return { x: -away.x + rest.x, y: -away.y + rest.y, scale: rest.scale, dim: rest.dim, alpha: 0 };
+}
+
+/** Where a card belongs for a given deck phase. */
+export function targetProps(
+  phase: 'before' | 'in' | 'after',
+  slot: number,
+  m: DeckMetrics,
+): SlotProps {
+  if (phase === 'before') return arrivalProps(slot, m);
+  if (phase === 'after') return exitProps(m);
+  return slotProps(slot, m);
 }
 
 /**
@@ -112,7 +135,7 @@ export const TRANSITION = {
   stagger: 0.03,
   /** Reduced motion: a plain crossfade, no slide. */
   reducedDuration: 0.3,
-  /** Deck exit into the questions step. */
+  /** Deck entry from the questions step, and exit into the closing step. */
   exitDuration: 0.9,
   /** Labels fade in after the card lands. */
   labelDelay: 0.2,

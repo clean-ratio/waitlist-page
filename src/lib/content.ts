@@ -36,142 +36,82 @@ export type ImageCard = {
 };
 
 export type Step =
-  | { kind: 'cover' }
-  | { kind: 'glass' }
-  | ImageCard
+  | { kind: 'hero' }
   | { kind: 'questions' }
+  | ImageCard
   | { kind: 'thanks' };
 
 export const WORDMARK = 'CLEAN RATIO';
 export const LOCATION_LINE = 'EST. 2026';
 
-export const COVER = {
-  kicker: WORDMARK,
-  line: 'A quieter kind',
-  lineItalic: 'of living.',
-  description:
-    'Quiet places, familiar sounds, and a moment to yourself.',
-  hint: 'SCROLL',
+/**
+ * The first screen: one photograph, slowly moving, with the waitlist form on
+ * it. Everything below it is for people who choose to keep scrolling.
+ */
+export const HERO = {
+  kicker: 'Waitlist — now open',
+  line: 'Return to your',
+  lineItalic: 'natural rhythm.',
+  description: 'Nature-led rituals for recovery, healing, and the days in between.',
+  hint: 'Scroll to build your recovery profile',
+  image: {
+    /** 16:9, cut from the 1904 × 2544 original. */
+    wide: '/images/hero/glacier-wide.webp',
+    /** 3:4, for portrait screens. */
+    tall: '/images/hero/glacier-tall.webp',
+    alt: 'A glacier lagoon: walls of blue ice around a natural arch, with floating ice in still water.',
+  },
+  /**
+   * Optional looping clip. Leave undefined and the still above is animated in
+   * CSS instead; drop an MP4/WebM path in here and the hero plays it, with the
+   * still as its poster.
+   */
+  video: undefined as string | undefined,
 };
 
 const CARD_CONTENT = [
   {
     kind: 'image',
     id: 'c01',
-    src: '/images/beach-side.jpg',
-    alt: 'Palms line a white sand beach beside turquoise water and green mountains.',
-    title: 'Beach Side',
-    caption: 'Nothing scheduled until the tide turns.',
+    src: '/images/collection/cooling-pink-salt.webp',
+    alt: 'Rose-pink salt shoreline meets still blue-green water.',
+    title: 'Cooling',
+    caption: 'A cool breath. A softer landing.',
     tone: 'light',
-    focal: { x: 45, y: 55 },
+    focal: { x: 55, y: 52 },
     track: {
-      src: ['/sounds/beach_side.mpeg'],
-      title: 'Beach Side',
-      volume: 0.5,
+      src: ['/sounds/deep_dive.mpeg'],
+      title: 'A Cooler Breath',
+      volume: 0.45,
     },
   },
   {
     kind: 'image',
     id: 'c02',
-    src: '/images/vacation.jpg',
-    alt: 'A sea cave opens onto a sunlit beach, with hanging vines above calm turquoise water.',
-    title: 'Vacation Vibe',
-    caption: 'Somewhere with no reason to hurry.',
+    src: '/images/collection/muscle-recovery-sage-img-2711.webp',
+    alt: 'Soft sage grasses across a quiet, open landscape.',
+    title: 'Muscle Recovery',
+    caption: 'Make room to settle back in.',
     tone: 'light',
-    focal: { x: 40, y: 55 },
-    track: {
-      src: ['/sounds/vacation_vibe.mpeg'],
-      title: 'Vacation Vibe',
-      volume: 0.5,
-    },
-  },
-  {
-    kind: 'image',
-    id: 'c03',
-    src: '/images/river-side.jpg',
-    alt: 'Deer stand in a rocky stream beneath a waterfall surrounded by green forest.',
-    title: 'River Side',
-    caption: 'Follow the water, forget the hour.',
-    tone: 'dark',
-    focal: { x: 50, y: 50 },
+    focal: { x: 50, y: 60 },
     track: {
       src: ['/sounds/river_side.mpeg'],
-      title: 'River Side',
+      title: 'Under Open Sky',
       volume: 0.45,
     },
   },
   {
     kind: 'image',
     id: 'c04',
-    src: '/images/deep-dive.jpg',
-    alt: 'A scuba diver explores a blue underwater cavern beneath shafts of sunlight.',
-    title: 'Deep Dive',
-    caption: 'Below the surface, everything slows.',
-    tone: 'dark',
-    focal: { x: 55, y: 50 },
-    track: {
-      src: ['/sounds/deep_dive.mpeg'],
-      title: 'Deep Dive',
-      volume: 0.45,
-    },
-  },
-  {
-    kind: 'image',
-    id: 'c06',
-    src: '/images/road_trip.jpg',
-    alt: 'A coastal road curves between green hills and the ocean, seen through a car windshield.',
-    title: 'Road Trip',
-    caption: 'Take the long way along the coast.',
-    tone: 'dark',
-    focal: { x: 45, y: 50 },
-    track: {
-      src: ['/sounds/raod_trip.mpeg'],
-      title: 'Road Trip',
-      volume: 0.5,
-    },
-  },
-  {
-    kind: 'image',
-    id: 'c07',
-    src: '/images/calm_home.jpg',
-    alt: 'A wooden cabin sits among pine trees beside a lake glowing in the evening sun.',
-    title: 'Calm Home',
-    caption: 'A little space to come back to yourself.',
-    tone: 'dark',
-    focal: { x: 55, y: 50 },
+    src: '/images/collection/skin-recovery-lilac-img-2806.webp',
+    alt: 'Cherry blossoms arch over a softly lit woodland path.',
+    title: 'Skin Recovery',
+    caption: 'Let a little softness return.',
+    tone: 'light',
+    focal: { x: 50, y: 48 },
     track: {
       src: ['/sounds/calm_home.mpeg'],
-      title: 'Calm Home',
-      volume: 0.45,
-    },
-  },
-  {
-    kind: 'image',
-    id: 'c08',
-    src: '/images/coffee-Shop.jpg',
-    alt: 'A cup of coffee rests on a cafe table, with musicians and warm hanging lights behind it.',
-    title: 'Coffee Shop',
-    caption: 'A warm cup and a moment of your own.',
-    tone: 'dark',
-    focal: { x: 50, y: 60 },
-    track: {
-      src: ['/sounds/coffee_shop.mpeg'],
-      title: 'Coffee Shop',
-      volume: 0.4,
-    },
-  },
-  {
-    kind: 'image',
-    id: 'c09',
-    src: '/images/work_space.jpg',
-    alt: 'A wooden desk with a laptop and monitor faces tall windows overlooking a rainy street.',
-    title: 'Work Space',
-    caption: 'Room to think, space to make.',
-    tone: 'dark',
-    focal: { x: 50, y: 55 },
-    track: {
-      src: ['/sounds/work_space.mpeg'],
-      title: 'Work Space',
+      title: 'Return to Stillness',
       volume: 0.4,
     },
   },
@@ -194,23 +134,35 @@ export const INTRO_TRACK: Track = {
   volume: 0.28,
 };
 
+/**
+ * The page, top to bottom: the hero with the form, the optional profile
+ * questions, the diagonal deck, and a closing step.
+ */
 export const STEPS: Step[] = [
-  { kind: 'cover' },
-  { kind: 'glass' },
-  ...IMAGE_CARDS,
+  { kind: 'hero' },
   { kind: 'questions' },
+  ...IMAGE_CARDS,
   { kind: 'thanks' },
 ];
 
-/** Steps the deck itself owns: cover, glass, then the image cards. */
-export const DECK_STEPS = STEPS.slice(0, 2 + IMAGE_CARDS.length);
+/** The deck owns the image cards only. */
+export const DECK_STEPS = IMAGE_CARDS;
 export const DECK_LENGTH = DECK_STEPS.length;
 
-export const STEP_COVER = 0;
-export const STEP_GLASS = 1;
+export const STEP_HERO = 0;
+export const STEP_QUESTIONS = 1;
 export const STEP_FIRST_CARD = 2;
-export const STEP_QUESTIONS = STEPS.findIndex((s) => s.kind === 'questions');
+export const STEP_LAST_CARD = STEP_FIRST_CARD + IMAGE_CARDS.length - 1;
 export const STEP_THANKS = STEPS.length - 1;
+
+/** Where the deck is relative to the visitor: still to come, on screen, or done. */
+export type DeckPhase = 'before' | 'in' | 'after';
+
+export function deckPhase(step: number): DeckPhase {
+  if (step < STEP_FIRST_CARD) return 'before';
+  if (step > STEP_LAST_CARD) return 'after';
+  return 'in';
+}
 
 export function imageCardAt(step: number): ImageCard | null {
   const s = STEPS[step];

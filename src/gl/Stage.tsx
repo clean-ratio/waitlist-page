@@ -1,17 +1,42 @@
 import { useEffect, useState } from 'react';
-import { Canvas, type RootState } from '@react-three/fiber';
+import { Canvas, useThree, type RootState } from '@react-three/fiber';
 import Deck from './Deck';
 import type { DeckMetrics } from '../lib/deckLayout';
+import type { DeckPhase } from '../lib/content';
 
 type Props = {
   metrics: DeckMetrics;
   activeIndex: number;
-  exiting: boolean;
-  retireGlass: boolean;
+  phase: DeckPhase;
   reducedMotion: boolean;
   onStep: (slot: number) => void;
   onContextLost: () => void;
 };
+
+function RenderVisibility({ canvas }: { canvas: HTMLCanvasElement | null }) {
+  const setFrameloop = useThree((state) => state.setFrameloop);
+
+  useEffect(() => {
+    const syncVisibility = () => {
+      setFrameloop(document.hidden ? 'never' : 'demand');
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      setFrameloop(entry.isIntersecting && !document.hidden ? 'demand' : 'never');
+    });
+
+    if (canvas) observer.observe(canvas);
+    document.addEventListener('visibilitychange', syncVisibility);
+    syncVisibility();
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', syncVisibility);
+      setFrameloop('demand');
+    };
+  }, [canvas, setFrameloop]);
+
+  return null;
+}
 
 /**
  * The WebGL stage. It stays mounted for the whole visit — remounting the
@@ -25,8 +50,7 @@ type Props = {
 export default function Stage({
   metrics,
   activeIndex,
-  exiting,
-  retireGlass,
+  phase,
   reducedMotion,
   onStep,
   onContextLost,
@@ -61,11 +85,11 @@ export default function Stage({
       style={{ position: 'fixed', inset: 0 }}
       aria-hidden="true"
     >
+      <RenderVisibility canvas={canvas} />
       <Deck
         metrics={metrics}
         activeIndex={activeIndex}
-        exiting={exiting}
-        retireGlass={retireGlass}
+        phase={phase}
         reducedMotion={reducedMotion}
         onStep={onStep}
       />
