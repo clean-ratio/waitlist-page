@@ -1,38 +1,41 @@
-/*
- * Open-source interpretation of the Cezanne / Cantoria reference pairing.
- * Both font files and their OFL licenses are bundled in /fonts.
- */
 @font-face {
-  font-family: 'Manrope';
-  src: url('/fonts/manrope-variable.woff2') format('woff2');
+  font-family: 'Ranade';
+  src: url('/fonts/Ranade-Thin.otf') format('opentype');
   font-style: normal;
-  font-weight: 200 800;
+  font-weight: 200;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Mr De Haviland';
-  src: url('/fonts/mr-de-haviland-regular.ttf') format('truetype');
+  font-family: 'Ranade';
+  src: url('/fonts/Ranade-Light.otf') format('opentype');
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Fragment Mono';
+  src: url('/fonts/FragmentMono-Regular.ttf') format('truetype');
   font-style: normal;
   font-weight: 400;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Lora';
-  src: url('/fonts/lora-variable.ttf') format('truetype');
-  font-style: normal;
-  font-weight: 400 700;
+  font-family: 'Fragment Mono';
+  src: url('/fonts/FragmentMono-Italic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: 400;
   font-display: swap;
 }
 
 :root {
-  --font-display: 'Lora', Georgia, 'Times New Roman', serif;
-  --font-body: 'Manrope', 'Segoe UI', sans-serif;
-  --font-label: var(--font-body);
-  --font-display-weight: 400;
-  --font-body-weight: 400;
-  --font-label-weight: 500;
-  /* The display face is already handwritten; do not artificially slant it. */
+  --font-display: 'Ranade', 'Helvetica Neue', sans-serif;
+  --font-body: 'Ranade', 'Helvetica Neue', sans-serif;
+  --font-label: 'Fragment Mono', monospace;
+  --font-display-weight: 300;
+  --font-body-weight: 300;
+  --font-label-weight: 400;
   --font-emphasis-style: normal;
 }

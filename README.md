@@ -52,8 +52,8 @@ under `artifacts/source-images/new_images/` and excluded from Git and Vite's
 published `public` tree. `npm run images` regenerates the WebP collection,
 manifest, and Open Graph image with Sharp.
 
-Lora is self-hosted for display type; Manrope is bundled locally for body text.
-Font licenses are in `public/fonts/`.
+Ranade Light and Thin provide the body and display cuts; Fragment Mono accents
+labels and controls. Font licenses are in `public/fonts/`.
 
 ## Motion and accessibility
 

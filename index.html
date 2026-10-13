@@ -11,9 +11,7 @@
       content="Nature-led rituals for recovery, healing, and the days in between."
     />
 
-    <!-- Vite ships an empty #root, so a shared link would show nothing without
-         these. The share image and the static form below are the whole
-         no-JavaScript experience. -->
+    <!-- Share metadata is independent of the client-rendered waitlist. -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Clean Ratio — Return to your natural rhythm" />
     <meta
@@ -25,13 +23,14 @@
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/logo_files/favicon.png" type="image/png" sizes="64x64" />
     <link rel="preload" as="image" href="/images/hero/glacier-wide.webp" media="(min-aspect-ratio: 1/1)" fetchpriority="high" />
     <link rel="preload" as="image" href="/images/hero/glacier-tall.webp" media="(max-aspect-ratio: 1/1)" fetchpriority="high" />
 
     <link rel="stylesheet" href="/typography.css" />
-    <link rel="preload" href="/fonts/lora-variable.ttf" as="font" type="font/ttf" crossorigin />
-    <link rel="preload" href="/fonts/manrope-variable.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/Ranade-Thin.otf" as="font" type="font/otf" crossorigin />
+    <link rel="preload" href="/fonts/Ranade-Light.otf" as="font" type="font/otf" crossorigin />
+    <link rel="preload" href="/fonts/FragmentMono-Regular.ttf" as="font" type="font/ttf" crossorigin />
 
     <style>
       /* Inlined so the cover paints before anything else loads. */
@@ -47,7 +46,7 @@
         height: 100%;
         background: #9fc3d1 url('/images/hero/glacier-wide.webp') center 45% / cover no-repeat;
         color: var(--ink);
-        font: var(--font-body-weight) 15px/1.75 var(--font-body);
+        font: var(--font-body-weight) 16px/1.618 var(--font-body);
         font-synthesis: none;
       }
       #root {
@@ -59,140 +58,10 @@
           background-image: url('/images/hero/glacier-tall.webp');
         }
       }
-      .boot {
-        height: 100%;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding: 24px;
-        max-width: 640px;
-        margin: 0 auto;
-        background: rgb(248 247 241 / 0.9);
-      }
-      .boot h1 {
-        font: var(--font-display-weight) clamp(44px, 6vw, 72px) / 1.1 var(--font-display);
-        letter-spacing: 0;
-        margin: auto 0 0;
-      }
-      .boot h1 em {
-        font-style: normal;
-      }
-      .boot .intro {
-        max-width: 34ch;
-        margin: 14px 0 0;
-        color: var(--stone);
-        font-size: 14px;
-        line-height: 1.55;
-      }
-      .boot .label {
-        font: var(--font-label-weight) 11px/1.4 var(--font-label);
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: var(--stone);
-        margin: 0;
-      }
-      .boot form {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-        margin: 28px 0 0;
-      }
-      .boot input[type='text'],
-      .boot input[type='email'] {
-        appearance: none;
-        border: 0;
-        border-bottom: 1px solid var(--hairline);
-        background: transparent;
-        font: inherit;
-        font-size: 16px;
-        padding: 6px 0;
-        border-radius: 0;
-        color: inherit;
-      }
-      .boot .consent {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 10px;
-        align-items: start;
-        font-size: 13px;
-        color: var(--stone);
-      }
-      .boot button {
-        align-self: flex-start;
-        font: inherit;
-        font-size: 16px;
-        background: none;
-        border: 0;
-        border-bottom: 1px solid var(--hairline);
-        padding: 0 0 3px;
-        color: inherit;
-        cursor: pointer;
-      }
-      .boot .hp {
-        position: absolute;
-        left: -9999px;
-      }
-      .boot .reassure {
-        font-size: 12px;
-        color: var(--stone);
-        opacity: 0.6;
-        margin: 0;
-      }
-      @media (max-width: 640px) {
-        .boot {
-          min-height: 100svh;
-          height: auto;
-          padding: max(16px, env(safe-area-inset-top)) 16px
-            max(16px, env(safe-area-inset-bottom));
-          gap: clamp(18px, 4vh, 30px);
-        }
-        .boot h1 {
-          font-size: clamp(38px, 12vw, 56px);
-          line-height: 1.04;
-        }
-        .boot form {
-          gap: 10px;
-          margin-top: 16px;
-        }
-      }
     </style>
   </head>
   <body>
-    <div id="root">
-      <!-- Replaced by React on load. Left standing if JavaScript fails, so
-           people can still join the list — the waitlist never depends on the
-           GPU, and it does not depend on the bundle either. -->
-      <div class="boot">
-        <p class="label">Clean Ratio — Waitlist</p>
-        <h1>Return to your natural rhythm.</h1>
-        <p class="intro">Nature-led rituals for recovery, healing, and the days in between.</p>
-
-        <form>
-          <label class="label" for="boot-name">Name</label>
-          <input id="boot-name" name="name" type="text" autocomplete="name" maxlength="60" required />
-
-          <label class="label" for="boot-email">Email</label>
-          <input id="boot-email" name="email" type="email" autocomplete="email" maxlength="254" required />
-
-          <label class="consent">
-            <input type="checkbox" name="consent" value="true" required />
-            <span>I agree to the use of my name, email, and answers as described in the privacy notice.
-              <a href="/privacy.html">Privacy notice</a></span>
-          </label>
-
-          <div class="hp" aria-hidden="true">
-            <label for="boot-company">Company</label>
-            <input id="boot-company" name="company" type="text" tabindex="-1" autocomplete="off" />
-          </div>
-
-          <button type="submit" disabled>Waitlist opening soon</button>
-        </form>
-        <p class="intro" role="status">Your details are not sent or saved yet.</p>
-
-        <p class="label">EST. 2026</p>
-      </div>
-    </div>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

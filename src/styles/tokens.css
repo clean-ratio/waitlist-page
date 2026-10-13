@@ -20,14 +20,19 @@
   --hairline: rgb(26 39 31 / 0.16);
   --clay: #a75d48;
 
-  /* Font families and weights are shared with static pages in /typography.css. */
-
-  --display: clamp(48px, 7vw, 108px);
-  --display-line: clamp(44px, 5.8vw, 72px);
-  --body: 15px;
-  --body-leading: 1.75;
-  --label: 11px;
-  --label-tracking: 0.1em;
+  /* Type sizes follow a rounded golden-ratio scale from a 16px base. */
+  --type-xs: 10px;
+  --type-base: 16px;
+  --type-step-1: 26px;
+  --type-step-2: 42px;
+  --type-step-3: 68px;
+  --type-step-4: 110px;
+  --display: clamp(var(--type-step-3), 7vw, var(--type-step-4));
+  --display-line: clamp(var(--type-step-2), 5.8vw, var(--type-step-3));
+  --body: var(--type-base);
+  --body-leading: 1.618;
+  --label: 12px;
+  --label-tracking: 0.06em;
 
   /* Frame */
   --edge: 24px;

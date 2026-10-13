@@ -33,6 +33,9 @@ import {
 } from './lib/content';
 import { preloadAhead } from './gl/useCardTextures';
 
+// Temporary hero-only mask; flip to true to restore the complete page.
+const SHOW_SECTIONS_BELOW_HERO = false;
+
 // Lazy so the first paint is HTML text over a CSS background, not a WebGL boot.
 const Stage = lazy(() => import('./gl/Stage'));
 
@@ -53,7 +56,7 @@ export default function App() {
   const reducedMotion = useReducedMotion();
   const stepTo = useStepTo();
 
-  useStepInput();
+  useStepInput(SHOW_SECTIONS_BELOW_HERO);
   useDeckAudio();
 
   const [useWebGL, setUseWebGL] = useState(webglAvailable);
@@ -62,7 +65,7 @@ export default function App() {
   // Boot the scene once the hero photograph has had the network to itself.
   // The deck is two scrolls away, so there is time; scrolling boots it at once.
   useEffect(() => {
-    if (!useWebGL) return;
+    if (!SHOW_SECTIONS_BELOW_HERO || !useWebGL) return;
     if (state.step > 0) {
       setStageReady(true);
       return;
@@ -109,7 +112,9 @@ export default function App() {
   // Two cards ahead, so none ever arrives empty. From the questions step on,
   // so the deck is ready the moment it is scrolled to.
   useEffect(() => {
-    if (step >= STEP_QUESTIONS) preloadAhead(step - STEP_FIRST_CARD);
+    if (SHOW_SECTIONS_BELOW_HERO && step >= STEP_QUESTIONS) {
+      preloadAhead(step - STEP_FIRST_CARD);
+    }
   }, [step]);
 
   const metrics = useMemo(
@@ -152,59 +157,67 @@ export default function App() {
         } as React.CSSProperties
       }
     >
-      <div className={styles.stage}>
-        {useWebGL ? (
-          <Suspense fallback={null}>
-            {stageReady && (
-              <Stage
+      {SHOW_SECTIONS_BELOW_HERO && (
+        <>
+          <div className={styles.stage}>
+            {useWebGL ? (
+              <Suspense fallback={null}>
+                {stageReady && (
+                  <Stage
+                    metrics={metrics}
+                    activeIndex={activeIndex}
+                    phase={phase}
+                    reducedMotion={reducedMotion}
+                    onStep={stepTo}
+                    onContextLost={onContextLost}
+                  />
+                )}
+              </Suspense>
+            ) : (
+              <FallbackDeck
                 metrics={metrics}
                 activeIndex={activeIndex}
                 phase={phase}
-                reducedMotion={reducedMotion}
+                step={step}
                 onStep={stepTo}
-                onContextLost={onContextLost}
               />
             )}
-          </Suspense>
-        ) : (
-          <FallbackDeck
-            metrics={metrics}
-            activeIndex={activeIndex}
-            phase={phase}
-            step={step}
-            onStep={stepTo}
-          />
-        )}
-      </div>
+          </div>
 
-      <section
-        className={styles.overlay}
-        aria-roledescription="carousel"
-        aria-label={`An invitation, in ${IMAGE_CARDS.length} cards`}
-      >
-        <CornerLabels step={step} />
+          <section
+            className={styles.overlay}
+            aria-roledescription="carousel"
+            aria-label={`An invitation, in ${IMAGE_CARDS.length} cards`}
+          >
+            <CornerLabels step={step} />
 
-        {/* The active card always sits at screen centre, so its text simply
-            sits over that rectangle. */}
-        <div
-          className={overlay.cardBox}
-          style={{ display: phase === 'in' ? undefined : 'none' }}
-        >
-          {card && <CardLabels card={card} active />}
-        </div>
+            {/* The active card always sits at screen centre, so its text simply
+                sits over that rectangle. */}
+            <div
+              className={overlay.cardBox}
+              style={{ display: phase === 'in' ? undefined : 'none' }}
+            >
+              {card && <CardLabels card={card} active />}
+            </div>
 
-        <p className={styles.liveRegion} role="status" aria-live="polite">
-          {announcement}
-        </p>
-      </section>
+            <p className={styles.liveRegion} role="status" aria-live="polite">
+              {announcement}
+            </p>
+          </section>
+        </>
+      )}
 
-      <Hero active={step === STEP_HERO} />
-      <Questions active={step === STEP_QUESTIONS} />
-      <Thanks active={step === STEP_THANKS} />
+      <Hero active={!SHOW_SECTIONS_BELOW_HERO || step === STEP_HERO} />
+      {SHOW_SECTIONS_BELOW_HERO && (
+        <>
+          <Questions active={step === STEP_QUESTIONS} />
+          <Thanks active={step === STEP_THANKS} />
 
-      {/* Outside the overlay: the overlay is its own stacking context, and the
-          panel has to stay above the questions page. */}
-      <NowPlaying isPhone={viewport.isPhone} />
+          {/* Outside the overlay: the overlay is its own stacking context, and the
+              panel has to stay above the questions page. */}
+          <NowPlaying isPhone={viewport.isPhone} />
+        </>
+      )}
 
     </div>
   );

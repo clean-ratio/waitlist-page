@@ -42,7 +42,6 @@ export type Step =
   | { kind: 'thanks' };
 
 export const WORDMARK = 'CLEAN RATIO';
-export const LOCATION_LINE = 'EST. 2026';
 
 /**
  * The first screen: one photograph, slowly moving, with the waitlist form on

@@ -7,8 +7,7 @@ import './styles/global.css';
 const container = document.getElementById('root');
 if (!container) throw new Error('#root is missing from index.html');
 
-// createRoot clears the container, which is what replaces the static
-// no-JavaScript form in index.html with the real deck.
+// Start with an empty root. The waitlist mounts only after its timer or CTA.
 createRoot(container).render(
   <StrictMode>
     <StoreProvider>

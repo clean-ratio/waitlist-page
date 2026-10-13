@@ -38,12 +38,6 @@
   left: var(--edge);
 }
 
-.cornerTopRight {
-  top: var(--edge);
-  right: var(--edge);
-  text-align: right;
-}
-
 .cornerBottomRight {
   right: var(--edge);
   bottom: var(--edge);

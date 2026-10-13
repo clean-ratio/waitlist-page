@@ -1,7 +1,6 @@
 import styles from './Overlay.module.css';
 import {
   IMAGE_CARDS,
-  LOCATION_LINE,
   WORDMARK,
   imageCardAt,
 } from '../lib/content';
@@ -21,9 +20,6 @@ export default function CornerLabels({ step }: { step: number }) {
     <>
       <p className={`u-label ${styles.corner} ${styles.cornerTopLeft}`}>
         {WORDMARK}
-      </p>
-      <p className={`u-label ${styles.corner} ${styles.cornerTopRight}`}>
-        {LOCATION_LINE}
       </p>
       <div className={`${styles.corner} ${styles.cornerBottomRight}`}>
         {card && (

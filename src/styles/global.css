@@ -80,37 +80,3 @@ p {
   border: 0;
 }
 
-/*
- * The frosted form card, and the Now Playing panel.
- *
- * The blur alone is not enough to read against: the page is near-white, so a
- * mostly-transparent white card disappears into it. The fill carries the
- * legibility and the blur carries the depth.
- */
-.glass {
-  background: linear-gradient(
-    150deg,
-    rgb(252 251 249 / 0.92),
-    rgb(240 236 230 / 0.86)
-  );
-  backdrop-filter: blur(26px) saturate(135%);
-  -webkit-backdrop-filter: blur(26px) saturate(135%);
-  border: 1px solid rgb(255 255 255 / 0.7);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.9),
-    0 2px 6px rgb(26 25 22 / 0.04),
-    0 50px 90px -45px rgb(26 25 22 / 0.4);
-}
-
-/* The same fill without the blur, for when it is far from the active slot. */
-.glass--flat {
-  background: rgb(248 246 243 / 0.96);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .glass {
-    background: rgb(248 246 243 / 0.96);
-  }
-}

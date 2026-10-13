@@ -43,16 +43,17 @@
   gap: 14px;
 }
 
-.title {
-  font-size: clamp(48px, 6vw, 80px);
+.title.title {
+  font-size: clamp(var(--type-step-2), 6vw, var(--type-step-3));
+  font-weight: 200;
   line-height: 1.04;
 }
 
 .lede {
   max-width: 46ch;
   color: var(--stone);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: var(--type-base);
+  line-height: 1.618;
 }
 
 .kickerLabel {
@@ -92,7 +93,7 @@
 
 .number {
   font-family: var(--font-body);
-  font-size: clamp(30px, 4vw, 46px);
+  font-size: clamp(var(--type-step-1), 4vw, var(--type-step-2));
   font-weight: var(--font-body-weight);
   line-height: 1;
   color: var(--ink);
@@ -107,7 +108,7 @@
 }
 
 .question {
-  font-size: clamp(42px, 5vw, 62px);
+  font-size: clamp(var(--type-step-1), 5vw, var(--type-step-2));
   margin-bottom: clamp(20px, 3vh, 30px);
   max-width: 100%;
 }
