@@ -412,7 +412,6 @@
 .formSub,
 .floatingLabel,
 .consent,
-.joinedLine,
 .statusMessage {
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.25);
 }
@@ -747,24 +746,59 @@
   pointer-events: none;
 }
 
-.joined {
+/*
+ * After joining: a pane of glass over the same blur, a little above centre
+ * (the bottom inset puts its middle at 46%). Sharp-edged like the fields.
+ */
+/* Lets the success box centre on the whole screen, not the form column. */
+.floatingFormJoined {
+  position: static;
+}
+
+.successBox {
+  position: absolute;
+  inset: 0 0 8% 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  align-items: center;
+  gap: 22px;
+  width: min(440px, calc(100% - 48px));
+  height: fit-content;
+  margin: auto;
+  padding: 40px 36px;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: 0;
+  background: rgb(255 255 255 / 0.08);
+  -webkit-backdrop-filter: blur(24px) saturate(120%);
+  backdrop-filter: blur(24px) saturate(120%);
+  box-shadow: 0 12px 40px rgb(9 33 43 / 0.08);
   text-align: center;
+  text-wrap: balance;
 }
 
-.joinedLine {
-  margin: 0;
-  font-size: clamp(var(--type-step-1), 3vw, var(--type-step-2));
+/* Hierarchy by opacity alone: both lines use the message style. */
+.successBox .successGreeting {
+  color: white;
 }
 
-/* The same hairline as under the form title. */
-.joinedRule {
-  width: 40px;
+.successBox .successMessage {
+  color: rgb(255 255 255 / 0.75);
+}
+
+.successRule {
+  width: 100%;
   height: 1px;
-  background: rgb(255 255 255 / 0.3);
+  background: rgb(255 255 255 / 0.25);
+}
+
+/* Runs out with the hold, then the box leaves. */
+.successTimer {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  left: -1px;
+  height: 1px;
+  background: rgb(255 255 255 / 0.4);
+  transform-origin: left center;
 }
 
 /* Success and submit-failure share one message style. */
@@ -834,6 +868,10 @@
 
   .description {
     margin-top: 12px;
+  }
+
+  .successBox {
+    padding: 32px 24px;
   }
 
   .formHead,

@@ -18,6 +18,10 @@ import { useWaitlistRegistration } from '../lib/useWaitlistRegistration';
 const FORM_APPEAR_DELAY_MS = 1300;
 /** How long the confirmation stays readable before the form fades away. */
 const SUCCESS_MESSAGE_DURATION_MS = 5500;
+/** Longer names are cut with an ellipsis so the greeting stays one line. */
+const GREETING_NAME_MAX = 24;
+/** The success box's motion curve (an ease-out with a long, soft landing). */
+const SUCCESS_EASE = [0.22, 1, 0.36, 1] as const;
 
 const WAITLIST_FORM_COPY = {
   title: 'Join the waitlist',
@@ -31,7 +35,7 @@ const WAITLIST_FORM_COPY = {
   close: 'Close waitlist form',
   submit: 'Join the waitlist',
   submitting: 'One moment',
-  successGreeting: (name: string) => `Welcome, ${name}.`,
+  successGreeting: (name: string) => (!name ? 'Welcome.' : name.endsWith('…') ? `Welcome, ${name}` : `Welcome, ${name}.`),
   successMessage: 'You’re on the list. We’ll be in touch when the ice breaks.',
   submitError: 'The ice shifted on our end. Please try again in a moment.',
   errors: {
@@ -46,6 +50,23 @@ const WAITLIST_FORM_COPY = {
 
 type ErrorField = 'name' | 'email' | 'phone' | 'consent' | 'form';
 type FormErrors = Partial<Record<ErrorField, string>>;
+
+/** The name as typed (trimmed, case kept), cut at GREETING_NAME_MAX characters. */
+function greetingName(name: string): string {
+  const chars = Array.from(name.trim());
+  if (chars.length <= GREETING_NAME_MAX) return chars.join('');
+  // No full stop after the ellipsis: "Welcome, Maximiliana…" not "…."
+  return `${chars.slice(0, GREETING_NAME_MAX - 1).join('').trimEnd()}…`;
+}
+
+/** Starts the hold when the success box appears, so it and the timer line agree. */
+function SuccessHold({ onDone }: { onDone: () => void }) {
+  useEffect(() => {
+    const id = window.setTimeout(onDone, SUCCESS_MESSAGE_DURATION_MS);
+    return () => window.clearTimeout(id);
+  }, [onDone]);
+  return null;
+}
 
 function validateName(value: string): string | undefined {
   const name = value.trim();
@@ -308,9 +329,7 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
   useEffect(() => {
     if (!joined) return;
     closeRef.current?.focus({ preventScroll: true });
-    const id = window.setTimeout(onClose, SUCCESS_MESSAGE_DURATION_MS);
-    return () => window.clearTimeout(id);
-  }, [joined, onClose]);
+  }, [joined]);
 
   const validateField = (field: ErrorField, value: string): string | undefined => {
     if (field === 'name') return validateName(value);
@@ -384,6 +403,13 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
 
   const renderError = (id: string, error?: string) => <div className={styles.errorSlot} aria-live="polite">{error && <p id={id} className={styles.error}><InvalidFieldIcon />{error}</p>}</div>;
 
+  const greeting = WAITLIST_FORM_COPY.successGreeting(greetingName(state.lead.name ?? ''));
+  const successBox = {
+    hidden: { opacity: 0, y: reducedMotion ? 0 : 14, filter: reducedMotion ? 'blur(0px)' : 'blur(8px)' },
+    shown: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: reducedMotion ? 0.15 : 0.7, ease: SUCCESS_EASE } },
+    leaving: { opacity: 0, y: reducedMotion ? 0 : -8, filter: reducedMotion ? 'blur(0px)' : 'blur(6px)', transition: { duration: reducedMotion ? 0.15 : 0.6, ease: SUCCESS_EASE } },
+  };
+
   const floatingItem = {
     hidden: { opacity: 0, y: reducedMotion ? 0 : 12 },
     shown: { opacity: 1, y: 0, transition: { duration: reducedMotion ? 0.15 : 0.5, ease: EASE } },
@@ -393,13 +419,15 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
   return (
     <motion.div ref={dialogRef} className={styles.dialogBackdrop} role="dialog" aria-modal="true" aria-labelledby={joined ? 'wl-success-title' : 'wl-dialog-title'} aria-describedby={joined ? 'wl-success-message' : 'wl-dialog-description'} aria-busy={busy} tabIndex={-1} initial={{ opacity: 0 }} animate={{ opacity: open ? 1 : 0 }} transition={{ duration: reducedMotion ? 0.15 : 0.8, ease: 'easeOut' }}>
       <button ref={closeRef} type="button" className={styles.closeButton} aria-label={WAITLIST_FORM_COPY.close} onClick={onClose}><span className={styles.closeIcon} aria-hidden="true" /></button>
-      <div className={styles.floatingForm}>
+      <div className={`${styles.floatingForm} ${joined ? styles.floatingFormJoined : ''}`}>
         <AnimatePresence mode="wait">
           {joined ? (
-            <motion.div key="joined" className={styles.joined} role="status" initial={{ opacity: 0, y: reducedMotion ? 0 : 10 }} animate={{ opacity: open ? 1 : 0, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0.15 : 0.45, ease: EASE }}>
-              <p id="wl-success-title" className={`u-serif ${styles.joinedLine}`}>{WAITLIST_FORM_COPY.successGreeting(state.lead.name?.trim() ?? '')}</p>
-              <span className={styles.joinedRule} aria-hidden="true" />
-              <p id="wl-success-message" className={styles.statusMessage}>{WAITLIST_FORM_COPY.successMessage}</p>
+            <motion.div key="joined" className={styles.successBox} role="status" initial="hidden" animate={open ? 'shown' : 'leaving'} exit="leaving" variants={successBox}>
+              <p id="wl-success-title" className={`${styles.statusMessage} ${styles.successGreeting}`}>{greeting}</p>
+              <span className={styles.successRule} aria-hidden="true" />
+              <p id="wl-success-message" className={`${styles.statusMessage} ${styles.successMessage}`}>{WAITLIST_FORM_COPY.successMessage}</p>
+              <SuccessHold onDone={onClose} />
+              <motion.span className={styles.successTimer} aria-hidden="true" initial={{ scaleX: 1 }} animate={{ scaleX: 0 }} transition={{ duration: SUCCESS_MESSAGE_DURATION_MS / 1000, ease: 'linear' }} />
             </motion.div>
           ) : (
             <motion.form key="form" className={styles.fields} onSubmit={onSubmit} noValidate initial="hidden" animate={open ? 'shown' : 'closed'} variants={{ hidden: {}, shown: { transition: { delayChildren: reducedMotion ? 0 : 0.8, staggerChildren: reducedMotion ? 0 : 0.1 } }, closed: {} }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0.15 : 0.25, ease: EASE }}>
