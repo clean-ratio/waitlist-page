@@ -8,7 +8,8 @@ import { track, trackOnce } from '../lib/analytics';
 import { useStore } from '../lib/store';
 import { useEdgeStep } from '../lib/useEdgeStep';
 import { HERO } from '../lib/content';
-import { CONSENT_TEXT, waitlistSchema } from '../lib/schema';
+import { normalisePhone } from '../lib/phone';
+import { CONSENT_TEXT, PHONE_INVALID, waitlistSchema } from '../lib/schema';
 import { submitWaitlistEntry } from '../lib/submitWaitlistEntry';
 import { startAmbient } from '../lib/useDeckAudio';
 import { useWaitlistRegistration } from '../lib/useWaitlistRegistration';
@@ -23,11 +24,14 @@ const WAITLIST_FORM_COPY = {
   description: 'Early access, and nothing else in your inbox.',
   nameLabel: 'Name',
   emailLabel: 'Email',
+  phoneLabel: 'Phone',
+  optionalTag: 'Optional',
   consent: CONSENT_TEXT,
   privacyNotice: 'Privacy notice',
   close: 'Close waitlist form',
   submit: 'Join the waitlist',
   submitting: 'One moment',
+  successGreeting: (name: string) => `Welcome, ${name}.`,
   successMessage: 'You’re on the list. We’ll be in touch when the ice breaks.',
   submitError: 'The ice shifted on our end. Please try again in a moment.',
   errors: {
@@ -35,11 +39,12 @@ const WAITLIST_FORM_COPY = {
     nameTooLong: 'That is longer than we can store.',
     emailRequired: 'Please enter your email address.',
     emailInvalid: 'That email address does not look right.',
+    phoneInvalid: PHONE_INVALID,
     consentRequired: 'Please agree to the privacy notice to continue.',
   },
 } as const;
 
-type ErrorField = 'name' | 'email' | 'consent' | 'form';
+type ErrorField = 'name' | 'email' | 'phone' | 'consent' | 'form';
 type FormErrors = Partial<Record<ErrorField, string>>;
 
 function validateName(value: string): string | undefined {
@@ -55,6 +60,11 @@ function validateEmail(value: string): string | undefined {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
     ? undefined
     : WAITLIST_FORM_COPY.errors.emailInvalid;
+}
+
+/** Optional: an empty field is fine, anything else must be a real number. */
+function validatePhone(value: string): string | undefined {
+  return normalisePhone(value) === undefined ? WAITLIST_FORM_COPY.errors.phoneInvalid : undefined;
 }
 
 export default function Hero({ active, stepping }: { active: boolean; stepping: boolean }) {
@@ -211,6 +221,7 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
   const { state, dispatch } = useStore();
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
   const consentRef = useRef<HTMLInputElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -304,6 +315,7 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
   const validateField = (field: ErrorField, value: string): string | undefined => {
     if (field === 'name') return validateName(value);
     if (field === 'email') return validateEmail(value);
+    if (field === 'phone') return validatePhone(value);
     return undefined;
   };
   const updateFieldError = (field: ErrorField, value: string, onBlur: boolean) => {
@@ -324,23 +336,26 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
     const data = new FormData(event.currentTarget);
     const name = String(data.get('name') ?? '');
     const email = String(data.get('email') ?? '');
+    const phone = String(data.get('phone') ?? '');
     const consent = data.get('consent') !== null;
     const nextErrors: FormErrors = {
       name: validateName(name),
       email: validateEmail(email),
+      phone: validatePhone(phone),
       consent: consent ? undefined : WAITLIST_FORM_COPY.errors.consentRequired,
     };
-    const parsed = waitlistSchema.safeParse({ name, email, consent, company: data.get('company') });
+    const parsed = waitlistSchema.safeParse({ name, email, phone, consent, company: data.get('company') });
     if (!parsed.success) {
       for (const issue of parsed.error.issues) {
         const field = issue.path[0];
         if (field === 'name' && !nextErrors.name) nextErrors.name = name.trim() ? WAITLIST_FORM_COPY.errors.nameTooLong : WAITLIST_FORM_COPY.errors.nameRequired;
         if (field === 'email' && !nextErrors.email) nextErrors.email = email.trim() ? WAITLIST_FORM_COPY.errors.emailInvalid : WAITLIST_FORM_COPY.errors.emailRequired;
+        if (field === 'phone' && !nextErrors.phone) nextErrors.phone = WAITLIST_FORM_COPY.errors.phoneInvalid;
         if (field === 'consent' && !nextErrors.consent) nextErrors.consent = WAITLIST_FORM_COPY.errors.consentRequired;
       }
     }
     setErrors(nextErrors);
-    const firstInvalid = nextErrors.name ? nameRef.current : nextErrors.email ? emailRef.current : nextErrors.consent ? consentRef.current : null;
+    const firstInvalid = nextErrors.name ? nameRef.current : nextErrors.email ? emailRef.current : nextErrors.phone ? phoneRef.current : nextErrors.consent ? consentRef.current : null;
     if (firstInvalid) {
       firstInvalid.focus({ preventScroll: true });
       return;
@@ -353,7 +368,7 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
         // Honeypot filled: show success but do not send a database request.
         const id = parsed.data.company?.trim()
           ? ''
-          : await submitWaitlistEntry(parsed.data.name, parsed.data.email);
+          : await submitWaitlistEntry(parsed.data.name, parsed.data.email, parsed.data.phone);
         dispatch({ type: 'LEAD_DONE', id, name: parsed.data.name, email: parsed.data.email });
         onRegistered();
         track('waitlist_ready');
@@ -376,13 +391,15 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
   };
 
   return (
-    <motion.div ref={dialogRef} className={styles.dialogBackdrop} role="dialog" aria-modal="true" aria-labelledby={joined ? 'wl-success-title' : 'wl-dialog-title'} aria-describedby={joined ? undefined : 'wl-dialog-description'} aria-busy={busy} tabIndex={-1} initial={{ opacity: 0 }} animate={{ opacity: open ? 1 : 0 }} transition={{ duration: reducedMotion ? 0.15 : 0.8, ease: 'easeOut' }}>
+    <motion.div ref={dialogRef} className={styles.dialogBackdrop} role="dialog" aria-modal="true" aria-labelledby={joined ? 'wl-success-title' : 'wl-dialog-title'} aria-describedby={joined ? 'wl-success-message' : 'wl-dialog-description'} aria-busy={busy} tabIndex={-1} initial={{ opacity: 0 }} animate={{ opacity: open ? 1 : 0 }} transition={{ duration: reducedMotion ? 0.15 : 0.8, ease: 'easeOut' }}>
       <button ref={closeRef} type="button" className={styles.closeButton} aria-label={WAITLIST_FORM_COPY.close} onClick={onClose}><span className={styles.closeIcon} aria-hidden="true" /></button>
       <div className={styles.floatingForm}>
         <AnimatePresence mode="wait">
           {joined ? (
             <motion.div key="joined" className={styles.joined} role="status" initial={{ opacity: 0, y: reducedMotion ? 0 : 10 }} animate={{ opacity: open ? 1 : 0, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0.15 : 0.45, ease: EASE }}>
-              <p id="wl-success-title" className={styles.statusMessage}>{WAITLIST_FORM_COPY.successMessage}</p>
+              <p id="wl-success-title" className={`u-serif ${styles.joinedLine}`}>{WAITLIST_FORM_COPY.successGreeting(state.lead.name?.trim() ?? '')}</p>
+              <span className={styles.joinedRule} aria-hidden="true" />
+              <p id="wl-success-message" className={styles.statusMessage}>{WAITLIST_FORM_COPY.successMessage}</p>
             </motion.div>
           ) : (
             <motion.form key="form" className={styles.fields} onSubmit={onSubmit} noValidate initial="hidden" animate={open ? 'shown' : 'closed'} variants={{ hidden: {}, shown: { transition: { delayChildren: reducedMotion ? 0 : 0.8, staggerChildren: reducedMotion ? 0 : 0.1 } }, closed: {} }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0.15 : 0.25, ease: EASE }}>
@@ -403,6 +420,13 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
                   <label className={`u-label ${styles.floatingLabel}`} htmlFor="wl-email">{WAITLIST_FORM_COPY.emailLabel}</label>
                 </div>
                 {renderError('wl-email-error', errors.email)}
+              </motion.div>
+              <motion.div className={styles.field} variants={floatingItem}>
+                <div className={styles.inputWrap}>
+                  <input ref={phoneRef} id="wl-phone" name="phone" className={styles.input} placeholder=" " type="tel" inputMode="tel" autoComplete="tel" enterKeyHint="next" maxLength={32} aria-invalid={errors.phone ? 'true' : undefined} aria-describedby={errors.phone ? 'wl-phone-error' : undefined} onBlur={event => updateFieldError('phone', event.target.value, true)} onChange={event => updateFieldError('phone', event.target.value, false)} />
+                  <label className={`u-label ${styles.floatingLabel}`} htmlFor="wl-phone">{WAITLIST_FORM_COPY.phoneLabel}<span className={styles.optionalTag}>{WAITLIST_FORM_COPY.optionalTag}</span></label>
+                </div>
+                {renderError('wl-phone-error', errors.phone)}
               </motion.div>
               <motion.div className={styles.consentBlock} variants={floatingItem}>
                 <label className={styles.consent}>

@@ -412,6 +412,7 @@
 .formSub,
 .floatingLabel,
 .consent,
+.joinedLine,
 .statusMessage {
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.25);
 }
@@ -424,6 +425,12 @@
 
 .field + .field {
   margin-top: 20px;
+}
+
+/* Reads as part of the label: same type, a step quieter. */
+.optionalTag {
+  margin-left: 6px;
+  opacity: 0.78;
 }
 
 .inputWrap {
@@ -746,6 +753,18 @@
   gap: 12px;
   align-items: center;
   text-align: center;
+}
+
+.joinedLine {
+  margin: 0;
+  font-size: clamp(var(--type-step-1), 3vw, var(--type-step-2));
+}
+
+/* The same hairline as under the form title. */
+.joinedRule {
+  width: 40px;
+  height: 1px;
+  background: rgb(255 255 255 / 0.3);
 }
 
 /* Success and submit-failure share one message style. */

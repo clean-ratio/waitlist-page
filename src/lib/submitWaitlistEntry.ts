@@ -1,5 +1,6 @@
 import { CONSENT_VERSION, type AnswersPayload } from './schema';
 import { campaign } from './analytics';
+import { maskPhonesIn } from './phone';
 
 /**
  * The one place the page hands data off: two Supabase database functions,
@@ -50,8 +51,10 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   }
 
   if (!response.ok) {
-    const detail = await response.text().catch(() => '');
-    console.error(`[waitlist] ${fn} → ${response.status}`, detail);
+    // Only the error's code and message: PostgREST's `details` can echo the
+    // submitted row, phone number included.
+    const body = (await response.json().catch(() => null)) as { code?: string; message?: string } | null;
+    console.error(`[waitlist] ${fn} → ${response.status}`, body?.code ?? '', maskPhonesIn(body?.message ?? ''));
     if (response.status === 429) throw new SubmitError('rate_limited');
     if (response.status === 400 || response.status === 404) throw new SubmitError('invalid');
     throw new SubmitError('unavailable');
@@ -61,12 +64,18 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   return (text ? JSON.parse(text) : null) as T;
 }
 
-/** Adds them to the waitlist (or refreshes their entry) and returns the lead id. */
-export async function submitWaitlistEntry(name: string, email: string): Promise<string> {
+/**
+ * Adds them to the waitlist (or refreshes their entry) and returns the lead id.
+ * `phone` must already be E.164 (see lib/phone.ts), or null when not given.
+ */
+export async function submitWaitlistEntry(name: string, email: string, phone: string | null): Promise<string> {
   const { utm, referrer } = campaign();
   return rpc<string>('join_waitlist', {
     p_name: name,
     p_email: email,
+    // Only sent when given, so sign-ups without a phone also work against a
+    // database that has not had supabase/phone-migration.sql run yet.
+    ...(phone ? { p_phone: phone } : {}),
     p_consent: true,
     p_consent_version: CONSENT_VERSION,
     p_utm: utm ?? null,

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalisePhone } from './phone';
 
 /**
  * One schema, used by the hero form and the profile questions. The database
@@ -9,6 +10,9 @@ import { z } from 'zod';
 export const CONSENT_VERSION = '2026-10-v3';
 export const CONSENT_TEXT =
   'I agree to Clean Ratio storing these details and emailing me updates.';
+
+export const PHONE_INVALID =
+  'That number doesn’t quite add up. Check the digits, or add your country code.';
 
 /** Checkboxes arrive as `true`, `"true"` or `"on"` depending on the form. */
 const looseBoolean = z.preprocess(
@@ -28,6 +32,22 @@ export const waitlistSchema = z.object({
     .toLowerCase()
     .max(254)
     .email('That email address does not look right.'),
+  /** Optional. Arrives as typed; leaves as E.164, or null when left empty. */
+  phone: z
+    .string()
+    .max(32, PHONE_INVALID)
+    .optional()
+    .transform((value, ctx) => {
+      const phone = normalisePhone(value ?? '');
+      if (phone === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: PHONE_INVALID,
+        });
+        return z.NEVER;
+      }
+      return phone;
+    }),
   consent: looseBoolean,
   /** Honeypot. Bots fill it; humans never see it. */
   company: z.string().max(200).optional(),

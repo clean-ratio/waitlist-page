@@ -16,6 +16,7 @@
     "framer-motion": "^13.4.4",
     "gsap": "^3.13.0",
     "howler": "^2.2.4",
+    "libphonenumber-js": "^1.11.12",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "three": "^0.176.0",
