@@ -12,8 +12,11 @@ alter table public.leads add column if not exists phone text;
 --   check (phone is null or phone ~ '^\+[1-9][0-9]{6,14}$');
 
 -- 2. join_waitlist() with p_phone, replacing the six-argument version.
--- Joins the waitlist, or refreshes the entry if the email is already on it.
--- Returns the lead id, which the page needs to attach the profile.
+-- Joins the waitlist. Returns the new lead id, which the page needs to attach
+-- the profile, or null if the email is already on the list: one sign-up per
+-- email, and the existing entry is never changed. (Null rather than an error,
+-- so the request still counts towards the rate limit; an error would roll
+-- that back and make the list free to probe.)
 --
 -- The version before the phone field took six arguments. Two overloads would
 -- make PostgREST's choice ambiguous, so the old one goes. This drops only the
@@ -68,16 +71,10 @@ begin
 
   insert into public.leads (name, email, consent_at, consent_version, utm, referrer, phone)
   values (v_name, v_email, now(), p_consent_version, v_utm, left(p_referrer, 500), v_phone)
-  on conflict (email) do update
-    set name            = excluded.name,
-        -- Joining again without a phone keeps the one already on file.
-        phone           = coalesce(excluded.phone, public.leads.phone),
-        consent_at      = excluded.consent_at,
-        consent_version = excluded.consent_version,
-        updated_at      = now()
+  on conflict (email) do nothing
   returning id into v_id;
 
-  return v_id;
+  return v_id; -- null when the email was already there
 end;
 $$;
 

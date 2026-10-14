@@ -22,7 +22,7 @@ const REQUEST_TIMEOUT_MS = 15000;
 
 /** Thrown for any failed save; `code` says what the UI should tell the visitor. */
 export class SubmitError extends Error {
-  constructor(public code: 'rate_limited' | 'invalid' | 'unavailable') {
+  constructor(public code: 'rate_limited' | 'invalid' | 'unavailable' | 'duplicate') {
     super(code);
   }
 }
@@ -56,6 +56,8 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
     const body = (await response.json().catch(() => null)) as { code?: string; message?: string } | null;
     console.error(`[waitlist] ${fn} → ${response.status}`, body?.code ?? '', maskPhonesIn(body?.message ?? ''));
     if (response.status === 429) throw new SubmitError('rate_limited');
+    // A unique-email clash: two sign-ups with one email at the same moment.
+    if (response.status === 409) throw new SubmitError('duplicate');
     if (response.status === 400 || response.status === 404) throw new SubmitError('invalid');
     throw new SubmitError('unavailable');
   }
@@ -65,12 +67,13 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
 }
 
 /**
- * Adds them to the waitlist (or refreshes their entry) and returns the lead id.
- * `phone` must already be E.164 (see lib/phone.ts), or null when not given.
+ * Adds them to the waitlist and returns the lead id. Throws
+ * SubmitError('duplicate') if the email is already on it; that entry is left
+ * as it was. `phone` must already be E.164 (see lib/phone.ts), or null.
  */
 export async function submitWaitlistEntry(name: string, email: string, phone: string | null): Promise<string> {
   const { utm, referrer } = campaign();
-  return rpc<string>('join_waitlist', {
+  const id = await rpc<string | null>('join_waitlist', {
     p_name: name,
     p_email: email,
     // Only sent when given, so sign-ups without a phone also work against a
@@ -81,6 +84,8 @@ export async function submitWaitlistEntry(name: string, email: string, phone: st
     p_utm: utm ?? null,
     p_referrer: referrer ?? null,
   });
+  if (!id) throw new SubmitError('duplicate');
+  return id;
 }
 
 /** Saves the profile against the lead; a second save replaces the first. */

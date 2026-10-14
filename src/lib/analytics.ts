@@ -11,6 +11,7 @@ export type AnalyticsEvent =
   | 'hero_view'
   | 'waitlist_ready'
   | 'waitlist_error'
+  | 'waitlist_duplicate'
   | 'card_view'
   | 'questions_view'
   | 'answers_ready'

@@ -10,7 +10,7 @@ import { useEdgeStep } from '../lib/useEdgeStep';
 import { HERO } from '../lib/content';
 import { normalisePhone } from '../lib/phone';
 import { CONSENT_TEXT, PHONE_INVALID, waitlistSchema } from '../lib/schema';
-import { submitWaitlistEntry } from '../lib/submitWaitlistEntry';
+import { SubmitError, submitWaitlistEntry } from '../lib/submitWaitlistEntry';
 import { startAmbient } from '../lib/useDeckAudio';
 import { useWaitlistRegistration } from '../lib/useWaitlistRegistration';
 
@@ -38,6 +38,7 @@ const WAITLIST_FORM_COPY = {
   successGreeting: (name: string) => (!name ? 'Welcome.' : name.endsWith('…') ? `Welcome, ${name}` : `Welcome, ${name}.`),
   successMessage: 'You’re on the list. We’ll be in touch when the ice breaks.',
   submitError: 'The ice shifted on our end. Please try again in a moment.',
+  alreadyRegistered: 'You’re already on the waitlist. We’ll get back to you.',
   errors: {
     nameRequired: 'Please tell us your name.',
     nameTooLong: 'That is longer than we can store.',
@@ -392,6 +393,13 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
         onRegistered();
         track('waitlist_ready');
       } catch (err) {
+        // Not a failure: that email is on the list already, and stays as it was.
+        if (err instanceof SubmitError && err.code === 'duplicate') {
+          setErrors({ form: WAITLIST_FORM_COPY.alreadyRegistered });
+          dispatch({ type: 'LEAD_ERROR', message: 'duplicate' });
+          track('waitlist_duplicate');
+          return;
+        }
         // The real error stays in the console; the form, and what was typed, stay put.
         console.error('[waitlist] request failed', err);
         setErrors({ form: WAITLIST_FORM_COPY.submitError });
