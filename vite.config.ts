@@ -1,8 +1,20 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { HERO } from './src/lib/content';
+
+const escapeHtml = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/** The meta and share descriptions in index.html read the hero line, so it is written once. */
+function heroMeta(): Plugin {
+  return {
+    name: 'hero-meta',
+    transformIndexHtml: (html) => html.replaceAll('%HERO_DESCRIPTION%', escapeHtml(HERO.description)),
+  };
+}
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), heroMeta()],
   build: {
     target: 'es2022',
     // The three chunk is knowingly large and knowingly lazy: it is not on the

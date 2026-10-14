@@ -51,7 +51,8 @@ export const HERO = {
   kicker: 'Waitlist — now open',
   line: 'Return to your',
   lineItalic: 'natural rhythm.',
-  description: 'Nature-led care for recovery, healing, and the days in between.',
+  /** Also the page's meta and share description (filled into index.html at build). */
+  description: 'Recovery, healing, and the days in between.',
   image: {
     /** 16:9, cut from the 1904 × 2544 original. */
     wide: '/images/hero/glacier-wide.webp',

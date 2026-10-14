@@ -95,3 +95,6 @@ left join public.profiles p on p.lead_id = l.id
 order by l.created_at desc;
 
 revoke all on public.waitlist_export from anon, authenticated;
+
+-- 4. Tell the API about the new signature now, not on its next refresh.
+notify pgrst, 'reload schema';
