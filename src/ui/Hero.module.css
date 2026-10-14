@@ -166,7 +166,7 @@
 
 .wordmark img {
   display: block;
-  width: clamp(180px, 24vw, 280px);
+  width: clamp(205px, 27vw, 320px);
   height: auto;
 }
 
@@ -860,6 +860,11 @@
   .soundToggle {
     width: 38px;
     height: 38px;
+  }
+
+  /* As large as the header allows without reaching the sound button. */
+  .wordmark img {
+    width: clamp(180px, 100vw - 132px, 205px);
   }
 
   .line.line {
