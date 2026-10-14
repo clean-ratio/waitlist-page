@@ -145,7 +145,7 @@
 .frame {
   position: relative;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   flex: 1 0 auto;
   min-height: calc(100vh - 80px);
   min-height: calc(100svh - 80px);
@@ -252,152 +252,10 @@
   background: rgb(247 250 249 / 0.48);
 }
 
-.metaRow {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-height: 24px;
-  color: rgb(247 250 249 / 0.9);
-}
-
-.metaRow :global(.u-label) {
-  color: inherit;
-}
-
-.metaIcons {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.metaIcons svg {
-  width: 16px;
-  height: 16px;
-  flex: none;
-}
-
 .actions {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin-top: 20px;
-}
-
-.roundAction {
-  display: grid;
-  flex: none;
-  width: 50px;
-  height: 50px;
-  aspect-ratio: 1;
-  place-items: center;
-  border: 1px solid rgb(247 250 249 / 0.88);
-  border-radius: 50%;
-  background: #f7faf9;
-  color: #1a271f;
-  transition: transform 220ms ease, background 220ms ease;
-}
-
-.roundAction:hover:not(:disabled) {
-  transform: translateY(-2px);
-  background: #fff;
-}
-
-.roundAction:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.roundAction svg {
-  width: 22px;
-  height: 22px;
-}
-
-.footer {
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
-  min-height: 74px;
-}
-
-.deckDecor {
-  display: grid;
-  grid-template-columns: 116px auto;
-  align-items: end;
-  gap: 18px;
-  animation: deckEnter 700ms var(--step-ease) 1.2s both;
-}
-
-.previewCard {
-  width: 116px;
-  height: 68px;
-  overflow: hidden;
-  border: 1px solid rgb(247 250 249 / 0.68);
-  border-radius: 14px;
-  box-shadow: 0 8px 28px rgb(9 33 43 / 0.24);
-}
-
-.previewCard img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 66% 52%;
-}
-
-.deckControls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.progressTrack {
-  width: clamp(64px, 10vw, 144px);
-  height: 2px;
-  background: rgb(247 250 249 / 0.42);
-}
-
-.progressTrack span {
-  display: block;
-  width: 34%;
-  height: 100%;
-  background: rgb(247 250 249 / 0.95);
-}
-
-.deckArrows {
-  display: flex;
-  gap: 8px;
-}
-
-.deckArrow {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border: 1px solid rgb(247 250 249 / 0.75);
-  border-radius: 50%;
-  color: #f7faf9;
-  background: rgb(255 255 255 / 0.08);
-}
-
-.deckArrowNext {
-  color: #1a271f;
-  background: #f7faf9;
-}
-
-.deckArrow svg {
-  width: 18px;
-  height: 18px;
-}
-
-@keyframes deckEnter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* ---------- floating waitlist: independent of the hero beneath it ---------- */
@@ -552,15 +410,10 @@
 
 .formTitle,
 .formSub,
-.requiredLegend,
 .floatingLabel,
 .consent,
-.joined > p {
+.statusMessage {
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.25);
-}
-
-.requiredLegend {
-  margin: 0 auto;
 }
 
 .field {
@@ -571,11 +424,6 @@
 
 .field + .field {
   margin-top: 20px;
-}
-
-.optionalTag {
-  margin-left: 6px;
-  opacity: 0.78;
 }
 
 .inputWrap {
@@ -900,19 +748,13 @@
   text-align: center;
 }
 
-.joinedLine {
-  font-size: clamp(var(--type-step-1), 3vw, var(--type-step-2));
-}
-
-.joined :global(.u-label) {
-  color: white;
-}
-
-.joinedNote {
+/* Success and submit-failure share one message style. */
+.statusMessage {
+  margin: 0;
   font-size: 13px;
   line-height: 1.5;
   color: rgb(255 255 255 / 0.8);
-  margin-bottom: 6px;
+  text-align: center;
 }
 
 /* Compact only the form; preserve the hero's separate responsive rules. */
@@ -982,49 +824,12 @@
     grid-column: 1;
   }
 
-  .footer {
-    justify-content: flex-start;
-    min-height: 60px;
-    padding-top: 12px;
-  }
-
-  .deckDecor {
-    grid-template-columns: 78px auto;
-    gap: 12px;
-  }
-
-  .previewCard {
-    width: 78px;
-    height: 48px;
-  }
-
-  .deckControls {
-    gap: 8px;
-  }
-
-  .progressTrack {
-    width: clamp(46px, 14vw, 70px);
-  }
-
-  .deckArrows {
-    gap: 6px;
-  }
-
-  .deckArrow {
-    width: 30px;
-    height: 30px;
-  }
-
   .actions {
     gap: 10px;
   }
 
   .heroJoin {
     padding-inline: 18px;
-  }
-
-  .metaRow {
-    gap: 10px;
   }
 }
 
@@ -1035,8 +840,7 @@
 
   .drift,
   .shimmer,
-  .mist,
-  .deckDecor {
+  .mist {
     animation: none;
   }
 

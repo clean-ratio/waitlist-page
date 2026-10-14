@@ -16,6 +16,9 @@ const KEY =
 
 export const hasDatabase = Boolean(URL_ && KEY);
 
+/** A save that has not answered by now counts as failed, so the form can retry. */
+const REQUEST_TIMEOUT_MS = 15000;
+
 /** Thrown for any failed save; `code` says what the UI should tell the visitor. */
 export class SubmitError extends Error {
   constructor(public code: 'rate_limited' | 'invalid' | 'unavailable') {
@@ -30,14 +33,20 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   }
 
   let response: Response;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
     response = await fetch(`${URL_}/rest/v1/rpc/${fn}`, {
       method: 'POST',
       headers: { apikey: KEY, 'content-type': 'application/json' },
       body: JSON.stringify(args),
+      signal: controller.signal,
     });
-  } catch {
+  } catch (err) {
+    console.error(`[waitlist] ${fn} request failed`, err);
     throw new SubmitError('unavailable');
+  } finally {
+    window.clearTimeout(timeout);
   }
 
   if (!response.ok) {

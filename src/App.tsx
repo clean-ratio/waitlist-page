@@ -57,7 +57,7 @@ export default function App() {
   const stepTo = useStepTo();
 
   useStepInput(SHOW_SECTIONS_BELOW_HERO);
-  useDeckAudio();
+  useDeckAudio({ heroAmbient: !SHOW_SECTIONS_BELOW_HERO });
 
   const [useWebGL, setUseWebGL] = useState(webglAvailable);
   const [stageReady, setStageReady] = useState(false);
@@ -207,7 +207,7 @@ export default function App() {
         </>
       )}
 
-      <Hero active={!SHOW_SECTIONS_BELOW_HERO || step === STEP_HERO} />
+      <Hero active={!SHOW_SECTIONS_BELOW_HERO || step === STEP_HERO} stepping={SHOW_SECTIONS_BELOW_HERO} />
       {SHOW_SECTIONS_BELOW_HERO && (
         <>
           <Questions active={step === STEP_QUESTIONS} />

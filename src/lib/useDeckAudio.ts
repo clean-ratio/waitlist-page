@@ -10,6 +10,7 @@ import {
 import {
   IMAGE_CARDS,
   INTRO_TRACK,
+  STEP_HERO,
   STEP_QUESTIONS,
   STEP_THANKS,
   imageCardAt,
@@ -20,6 +21,9 @@ import { track } from './analytics';
 /** The questions step keeps the last track, at 40% of its volume. */
 const DUCK = 0.4;
 const INTRO_ID = 'intro';
+
+/** Keys that are not a user activation, so cannot unlock audio. */
+const NON_ACTIVATING_KEYS = new Set(['Escape', 'Shift', 'Control', 'Alt', 'Meta', 'CapsLock']);
 
 export function useAudioSnapshot(): AudioSnapshot {
   return useSyncExternalStore(
@@ -32,8 +36,11 @@ export function useAudioSnapshot(): AudioSnapshot {
 /**
  * Wires the deck to the audio manager. Every rule from the plan lives here so
  * the components stay dumb: they dispatch, this decides what is heard.
+ *
+ * `heroAmbient`: the hero is the whole page, so it plays the intro track from
+ * the visitor's first click, tap or key press, instead of staying silent.
  */
-export function useDeckAudio(): void {
+export function useDeckAudio({ heroAmbient = false }: { heroAmbient?: boolean } = {}): void {
   const { state, dispatch } = useStore();
   const { step, soundOn, audioUnlocked } = state;
   const primed = useRef(false);
@@ -46,6 +53,31 @@ export function useDeckAudio(): void {
   }, []);
 
   useEffect(() => watchVisibility(), []);
+
+  // Nothing plays before a real gesture. Howler's code is fetched once the
+  // page has loaded (no audio context yet), so the first gesture can unlock
+  // synchronously, which Safari requires.
+  useEffect(() => {
+    if (!heroAmbient || audioUnlocked) return;
+    const load = () => {
+      primed.current = true;
+      void prime();
+    };
+    if (document.readyState === 'complete') load();
+    else window.addEventListener('load', load, { once: true });
+
+    const onGesture = (event: Event) => {
+      if (event instanceof KeyboardEvent && NON_ACTIVATING_KEYS.has(event.key)) return;
+      if (navigator.userActivation && !navigator.userActivation.isActive) return;
+      startAmbient(() => dispatch({ type: 'AUDIO_UNLOCKED' }));
+    };
+    const gestures = ['click', 'touchend', 'keydown'] as const;
+    for (const type of gestures) window.addEventListener(type, onGesture, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener('load', load);
+      for (const type of gestures) window.removeEventListener(type, onGesture, { capture: true });
+    };
+  }, [heroAmbient, audioUnlocked, dispatch]);
 
   // Howler must be in memory before the Submit click, because unlock has to be
   // synchronous. Load it on the first pointer down (which comes before any
@@ -87,6 +119,11 @@ export function useDeckAudio(): void {
       return;
     }
 
+    if (step === STEP_HERO && heroAmbient) {
+      startIntro();
+      return;
+    }
+
     if (step === STEP_THANKS) {
       audio.fadeOutAndUnload();
       return;
@@ -100,7 +137,7 @@ export function useDeckAudio(): void {
       return;
     }
     audio.pause();
-  }, [step, audioUnlocked]);
+  }, [step, audioUnlocked, heroAmbient]);
 
   // Keep the reducer's flags in step with what is actually audible.
   const snapshot = useAudioSnapshot();
@@ -126,6 +163,18 @@ export function unlockFromGesture(dispatchUnlocked: () => void): void {
   // Synchronous, before any await — this is the whole point.
   const ok = audio.unlock();
   if (ok) dispatchUnlocked();
+}
+
+/**
+ * Call inside a gesture handler: unlocks audio and starts the intro track.
+ * Idempotent, so a second gesture never restarts or doubles it. If Howler is
+ * still loading, the unlock completes when it arrives and the step effect
+ * above starts the track.
+ */
+export function startAmbient(dispatchUnlocked: () => void): void {
+  if (!audio.unlock()) return;
+  dispatchUnlocked();
+  startIntro();
 }
 
 export function startIntro(): void {

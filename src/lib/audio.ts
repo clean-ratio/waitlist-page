@@ -62,6 +62,8 @@ type Listener = (snapshot: AudioSnapshot) => void;
 
 class DeckAudio {
   private howls = new Map<string, HowlType>();
+  /** One sound per track, reused on every resume, so plays never stack. */
+  private soundIds = new Map<string, number>();
   private targets = new Map<string, number>();
   private missing = new Set<string>();
   private listeners = new Set<Listener>();
@@ -133,8 +135,8 @@ class DeckAudio {
             .webkitAudioContext;
         if (Ctx) {
           const ctx = new Ctx();
-          void ctx.resume();
-          void ctx.close();
+          ctx.resume().catch(() => undefined);
+          ctx.close().catch(() => undefined);
         }
       } catch {
         /* ignore */
@@ -147,7 +149,11 @@ class DeckAudio {
 
     const { Howler } = howlerModule;
     try {
-      void Howler.ctx?.resume();
+      // Howler creates its context lazily. Create it here, inside the gesture,
+      // so it starts running rather than suspended. The getter does the setup.
+      if (!Howler.ctx) Howler.volume();
+      Howler.mute(this.muted);
+      Howler.ctx?.resume().catch(() => undefined);
       // A 50 ms silent buffer: the cheapest proof the context really is awake.
       if (Howler.ctx) {
         const buffer = Howler.ctx.createBuffer(1, 1, 22050);
@@ -193,7 +199,7 @@ class DeckAudio {
       onplayerror: () => {
         // Usually the context suspending under us. Retry once it is awake.
         howl.once('unlock', () => {
-          if (this.current === id && !this.paused) howl.play();
+          if (this.current === id && !this.paused) this.start(id, howl);
         });
       },
     });
@@ -201,6 +207,13 @@ class DeckAudio {
     this.targets.set(id, track.volume);
     this.howls.set(id, howl);
     if (track.startAt) howl.seek(track.startAt);
+  }
+
+  /** Plays the track's one sound, from where it was paused. */
+  private start(id: string, howl: HowlType): void {
+    if (howl.playing()) return;
+    const soundId = this.soundIds.get(id);
+    this.soundIds.set(id, soundId === undefined ? howl.play() : howl.play(soundId));
   }
 
   hasTrack(id: string): boolean {
@@ -236,7 +249,7 @@ class DeckAudio {
 
     // Drop any pending "pause when the fade ends" from a previous exit.
     next.off('fade');
-    if (!next.playing()) next.play();
+    this.start(id, next);
     next.fade(next.volume(), this.volumeFor(id), FADE_IN_MS);
     this.emit();
   }
@@ -260,14 +273,20 @@ class DeckAudio {
    * Pause, never stop. Walking back to card 2 then continues where it left
    * off, instead of restarting the playlist.
    */
-  pause(): void {
+  pause(fadeMs = 400): void {
     if (this.paused) return;
     this.paused = true;
     const howl = this.current && this.howls.get(this.current);
     if (howl) {
       howl.off('fade');
-      howl.fade(howl.volume(), 0, 400);
-      howl.once('fade', () => howl.pause());
+      if (fadeMs > 0) {
+        howl.fade(howl.volume(), 0, fadeMs);
+        howl.once('fade', () => howl.pause());
+      } else {
+        // At once: a hidden tab throttles timers, so a fade could run on.
+        howl.volume(0);
+        howl.pause();
+      }
     }
     this.emit();
   }
@@ -278,7 +297,7 @@ class DeckAudio {
     const howl = this.howls.get(this.current);
     if (howl) {
       howl.off('fade');
-      if (!howl.playing()) howl.play();
+      this.start(this.current, howl);
       howl.fade(howl.volume(), this.volumeFor(this.current), 600);
     }
     this.emit();
@@ -317,6 +336,7 @@ class DeckAudio {
       howl.unload();
     }
     this.howls.clear();
+    this.soundIds.clear();
     this.current = null;
     this.paused = false;
     this.emit();
@@ -326,26 +346,38 @@ class DeckAudio {
 export const audio = new DeckAudio();
 
 /**
- * Fade out when the tab is hidden, come back when it returns. Stops music
- * playing from a tab nobody is looking at.
+ * Pause when the tab is hidden, the window loses focus, or the page is put
+ * away (a phone locking or backgrounding the browser), and come back when it
+ * returns. Only music this paused is resumed, and mute is never touched, so a
+ * visitor who muted stays muted.
  */
 export function watchVisibility(): () => void {
   let pausedByUs = false;
 
-  const onChange = () => {
-    if (document.hidden) {
-      if (!audio.isPaused()) {
-        pausedByUs = true;
-        audio.pause();
-      }
-    } else if (pausedByUs) {
-      pausedByUs = false;
-      audio.resume();
-    }
+  const away = () => {
+    if (!audio.snapshot().currentId || audio.isPaused()) return;
+    pausedByUs = true;
+    audio.pause(0);
   };
+  const back = () => {
+    if (!pausedByUs || document.hidden || !document.hasFocus()) return;
+    pausedByUs = false;
+    audio.resume();
+  };
+  const onVisibility = () => (document.hidden ? away() : back());
 
-  document.addEventListener('visibilitychange', onChange);
-  return () => document.removeEventListener('visibilitychange', onChange);
+  document.addEventListener('visibilitychange', onVisibility);
+  window.addEventListener('blur', away);
+  window.addEventListener('focus', back);
+  window.addEventListener('pagehide', away);
+  window.addEventListener('pageshow', back);
+  return () => {
+    document.removeEventListener('visibilitychange', onVisibility);
+    window.removeEventListener('blur', away);
+    window.removeEventListener('focus', back);
+    window.removeEventListener('pagehide', away);
+    window.removeEventListener('pageshow', back);
+  };
 }
 
 const SOUND_KEY = 'deck:sound';

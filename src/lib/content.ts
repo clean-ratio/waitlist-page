@@ -51,8 +51,7 @@ export const HERO = {
   kicker: 'Waitlist — now open',
   line: 'Return to your',
   lineItalic: 'natural rhythm.',
-  description: 'Nature-led rituals for recovery, healing, and the days in between.',
-  hint: 'Scroll to build your recovery profile',
+  description: 'Nature-led care for recovery, healing, and the days in between.',
   image: {
     /** 16:9, cut from the 1904 × 2544 original. */
     wide: '/images/hero/glacier-wide.webp',

@@ -9,27 +9,27 @@ import { useStore } from '../lib/store';
 import { useEdgeStep } from '../lib/useEdgeStep';
 import { HERO } from '../lib/content';
 import { CONSENT_TEXT, waitlistSchema } from '../lib/schema';
-import { submitErrorMessage, submitWaitlistEntry } from '../lib/submitWaitlistEntry';
+import { submitWaitlistEntry } from '../lib/submitWaitlistEntry';
+import { startAmbient } from '../lib/useDeckAudio';
 import { useWaitlistRegistration } from '../lib/useWaitlistRegistration';
+
+/** How long after page load the waitlist form floats in. */
+const FORM_APPEAR_DELAY_MS = 1300;
+/** How long the confirmation stays readable before the form fades away. */
+const SUCCESS_MESSAGE_DURATION_MS = 5500;
 
 const WAITLIST_FORM_COPY = {
   title: 'Join the waitlist',
   description: 'Early access, and nothing else in your inbox.',
-  requiredLegend: '* Required',
-  requiredMark: '*',
-  optionalTag: 'Optional',
   nameLabel: 'Name',
   emailLabel: 'Email',
-  namePlaceholder: 'Name *',
-  emailPlaceholder: 'Email *',
   consent: CONSENT_TEXT,
   privacyNotice: 'Privacy notice',
   close: 'Close waitlist form',
   submit: 'Join the waitlist',
   submitting: 'One moment',
-  successEyebrow: 'You’re on the list',
-  successLine: (name: string) => `Thank you, _${name}._`,
-  successNote: 'We’ll write when the first rituals are ready. Your details have been saved securely.',
+  successMessage: 'You’re on the list. We’ll be in touch when the ice breaks.',
+  submitError: 'The ice shifted on our end. Please try again in a moment.',
   errors: {
     nameRequired: 'Please tell us your name.',
     nameTooLong: 'That is longer than we can store.',
@@ -57,7 +57,7 @@ function validateEmail(value: string): string | undefined {
     : WAITLIST_FORM_COPY.errors.emailInvalid;
 }
 
-export default function Hero({ active }: { active: boolean }) {
+export default function Hero({ active, stepping }: { active: boolean; stepping: boolean }) {
   const scroller = useRef<HTMLDivElement>(null);
   const triggerCleanup = useRef<(() => void) | null>(null);
   const closeTimer = useRef<number | undefined>(undefined);
@@ -88,7 +88,8 @@ export default function Hero({ active }: { active: boolean }) {
     if (closeTimer.current !== undefined) window.clearTimeout(closeTimer.current);
   }, []);
 
-  useEdgeStep(scroller, active && !cardOpen);
+  // Only step out of the hero when there are sections below it to step to.
+  useEdgeStep(scroller, stepping && active && !cardOpen);
 
   useEffect(() => {
     if (active) trackOnce('hero_view');
@@ -105,7 +106,7 @@ export default function Hero({ active }: { active: boolean }) {
       const elapsedSinceLoad = navigation?.loadEventEnd
         ? performance.now() - navigation.loadEventEnd
         : 0;
-      timer = window.setTimeout(openCard, Math.max(0, 4000 - elapsedSinceLoad));
+      timer = window.setTimeout(openCard, Math.max(0, FORM_APPEAR_DELAY_MS - elapsedSinceLoad));
     };
     const onLoad = () => scheduleTimer();
 
@@ -124,6 +125,16 @@ export default function Hero({ active }: { active: boolean }) {
     return cleanup;
   }, [registered, openCard]);
 
+  // The icon shows what is audible. Muting only ever happens from here.
+  const onSoundClick = () => {
+    if (state.playing) {
+      dispatch({ type: 'TOGGLE_SOUND' });
+      return;
+    }
+    if (!state.soundOn) dispatch({ type: 'TOGGLE_SOUND' });
+    startAmbient(() => dispatch({ type: 'AUDIO_UNLOCKED' }));
+  };
+
   return (
     <section className={`${styles.hero} ${active ? '' : styles.away}`} aria-label="Join the waitlist" inert={!active}>
       <HeroMedia playing={active} />
@@ -133,10 +144,10 @@ export default function Hero({ active }: { active: boolean }) {
             <Reveal className={styles.wordmark} delay={0.1} y={6}>
               <img src="/logo_files/White_Wordmark.png" alt="Clean Ratio" />
             </Reveal>
-            <button type="button" className={styles.soundToggle} aria-label={state.soundOn ? 'Mute sound' : 'Enable sound'} aria-pressed={state.soundOn} onClick={() => dispatch({ type: 'TOGGLE_SOUND' })}>
+            <button type="button" className={styles.soundToggle} aria-label={state.playing ? 'Mute sound' : 'Play sound'} aria-pressed={state.playing} onClick={onSoundClick}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
                 <path d="M4 10v4h3l4 3V7l-4 3H4Z" />
-                {state.soundOn && <path d="M15 9a4 4 0 0 1 0 6m2.5-8.5a7.5 7.5 0 0 1 0 11" />}
+                {state.playing && <path d="M15 9a4 4 0 0 1 0 6m2.5-8.5a7.5 7.5 0 0 1 0 11" />}
               </svg>
             </button>
           </header>
@@ -149,18 +160,7 @@ export default function Hero({ active }: { active: boolean }) {
               <Reveal as="p" className={styles.description} delay={0.8}>{HERO.description}</Reveal>
               <Reveal className={styles.engagement} delay={1.05} y={8}>
                 <div className={styles.divider} />
-                <div className={styles.metaRow}>
-                  <span className={styles.metaIcons} aria-hidden="true">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.2"><circle cx="10" cy="10" r="3.2" /><path d="M10 1.5v2m0 13v2m8.5-8.5h-2m-13 0h-2m14.5-6-1.4 1.4m-9.2 9.2L3 16m14 0-1.4-1.4M4.4 4.4 3 3" /></svg>
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M16.5 3.5C9 3.5 4 6.2 4 11.2c0 2.7 1.8 4.3 4.2 4.3 5.1 0 8.3-5.6 8.3-12Z" /><path d="M3 17c2.3-3.4 5.5-6.2 10-8.5" /></svg>
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M2 7c2.7 0 2.7-2 5.3-2s2.7 2 5.4 2S15.3 5 18 5m-16 6c2.7 0 2.7-2 5.3-2s2.7 2 5.4 2 2.6-2 5.3-2m-16 6c2.7 0 2.7-2 5.3-2s2.7-2 5.4-2 2.6-2 5.3-2" /></svg>
-                  </span>
-                  <span className="u-label">{HERO.hint}</span>
-                </div>
                 <div className={styles.actions}>
-                  <button type="button" className={styles.roundAction} aria-label={HERO.hint} onClick={() => dispatch({ type: 'NEXT' })} disabled={state.animating}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m7 10 5 5 5-5" /></svg>
-                  </button>
                   {registered ? (
                     <span className={`${styles.submit} ${styles.heroJoin} ${styles.registered}`} role="status">You’re on the list</span>
                   ) : (
@@ -170,18 +170,6 @@ export default function Hero({ active }: { active: boolean }) {
               </Reveal>
             </div>
           </div>
-          <footer className={styles.footer}>
-            <div className={styles.deckDecor} aria-hidden="true">
-              <div className={styles.previewCard}><img src={HERO.image.wide} alt="" /></div>
-              <div className={styles.deckControls}>
-                <div className={styles.progressTrack}><span /></div>
-                <div className={styles.deckArrows}>
-                  <span className={styles.deckArrow}><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M15 10H5m0 0 4-4m-4 4 4 4" /></svg></span>
-                  <span className={`${styles.deckArrow} ${styles.deckArrowNext}`}><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M5 10h10m0 0-4-4m4 4-4 4" /></svg></span>
-                </div>
-              </div>
-            </div>
-          </footer>
         </div>
       </div>
       {createPortal(cardMounted && <HeroForm key="waitlist" open={cardOpen} onClose={closeCard} onRegistered={markRegistered} />, document.body)}
@@ -309,7 +297,7 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
   useEffect(() => {
     if (!joined) return;
     closeRef.current?.focus({ preventScroll: true });
-    const id = window.setTimeout(onClose, 2000);
+    const id = window.setTimeout(onClose, SUCCESS_MESSAGE_DURATION_MS);
     return () => window.clearTimeout(id);
   }, [joined, onClose]);
 
@@ -325,7 +313,6 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
       const next = { ...current };
       if (error) next[field] = error;
       else delete next[field];
-      delete next.form;
       return next;
     });
   };
@@ -371,8 +358,9 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
         onRegistered();
         track('waitlist_ready');
       } catch (err) {
+        // The real error stays in the console; the form, and what was typed, stay put.
         console.error('[waitlist] request failed', err);
-        setErrors({ form: submitErrorMessage(err) });
+        setErrors({ form: WAITLIST_FORM_COPY.submitError });
         dispatch({ type: 'LEAD_ERROR', message: 'network' });
         track('waitlist_error');
       }
@@ -388,34 +376,31 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
   };
 
   return (
-    <motion.div ref={dialogRef} className={styles.dialogBackdrop} role="dialog" aria-modal="true" aria-labelledby={joined ? 'wl-success-title' : 'wl-dialog-title'} aria-describedby={joined ? undefined : 'wl-dialog-description'} aria-busy={busy} tabIndex={-1} initial={{ opacity: 0 }} animate={{ opacity: open ? 1 : 0 }} transition={{ duration: reducedMotion ? 0.15 : 0.8, ease: 'easeOut' }} onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
+    <motion.div ref={dialogRef} className={styles.dialogBackdrop} role="dialog" aria-modal="true" aria-labelledby={joined ? 'wl-success-title' : 'wl-dialog-title'} aria-describedby={joined ? undefined : 'wl-dialog-description'} aria-busy={busy} tabIndex={-1} initial={{ opacity: 0 }} animate={{ opacity: open ? 1 : 0 }} transition={{ duration: reducedMotion ? 0.15 : 0.8, ease: 'easeOut' }}>
       <button ref={closeRef} type="button" className={styles.closeButton} aria-label={WAITLIST_FORM_COPY.close} onClick={onClose}><span className={styles.closeIcon} aria-hidden="true" /></button>
       <div className={styles.floatingForm}>
         <AnimatePresence mode="wait">
           {joined ? (
             <motion.div key="joined" className={styles.joined} role="status" initial={{ opacity: 0, y: reducedMotion ? 0 : 10 }} animate={{ opacity: open ? 1 : 0, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0.15 : 0.45, ease: EASE }}>
-              <p id="wl-success-title" className="u-label">{WAITLIST_FORM_COPY.successEyebrow}</p>
-              <p className={`u-serif ${styles.joinedLine}`}><Words text={WAITLIST_FORM_COPY.successLine(state.lead.name ?? '')} delay={0.1} /></p>
-              <p className={styles.joinedNote}>{WAITLIST_FORM_COPY.successNote}</p>
+              <p id="wl-success-title" className={styles.statusMessage}>{WAITLIST_FORM_COPY.successMessage}</p>
             </motion.div>
           ) : (
             <motion.form key="form" className={styles.fields} onSubmit={onSubmit} noValidate initial="hidden" animate={open ? 'shown' : 'closed'} variants={{ hidden: {}, shown: { transition: { delayChildren: reducedMotion ? 0 : 0.8, staggerChildren: reducedMotion ? 0 : 0.1 } }, closed: {} }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0.15 : 0.25, ease: EASE }}>
               <motion.div className={styles.formHead} variants={floatingItem}>
                 <p id="wl-dialog-title" className={`u-serif ${styles.formTitle}`}>{WAITLIST_FORM_COPY.title}</p>
                 <p id="wl-dialog-description" className={styles.formSub}>{WAITLIST_FORM_COPY.description}</p>
-                <p className={`u-label ${styles.requiredLegend}`}>{WAITLIST_FORM_COPY.requiredLegend}</p>
               </motion.div>
               <motion.div className={styles.field} variants={floatingItem}>
                 <div className={styles.inputWrap}>
-                  <input ref={nameRef} id="wl-name" name="name" className={styles.input} placeholder=" " type="text" autoComplete="name" enterKeyHint="next" maxLength={60} required aria-required="true" aria-invalid={errors.name ? 'true' : undefined} aria-describedby={errors.name ? 'wl-name-error' : undefined} onBlur={event => setErrors(current => ({ ...current, name: validateName(event.target.value) }))} onChange={event => updateFieldError('name', event.target.value, false)} />
-                  <label className={`u-label ${styles.floatingLabel}`} htmlFor="wl-name">{WAITLIST_FORM_COPY.namePlaceholder}</label>
+                  <input ref={nameRef} id="wl-name" name="name" className={styles.input} placeholder=" " type="text" autoComplete="name" enterKeyHint="next" maxLength={60} required aria-required="true" aria-invalid={errors.name ? 'true' : undefined} aria-describedby={errors.name ? 'wl-name-error' : undefined} onBlur={event => updateFieldError('name', event.target.value, true)} onChange={event => updateFieldError('name', event.target.value, false)} />
+                  <label className={`u-label ${styles.floatingLabel}`} htmlFor="wl-name">{WAITLIST_FORM_COPY.nameLabel}</label>
                 </div>
                 {renderError('wl-name-error', errors.name)}
               </motion.div>
               <motion.div className={styles.field} variants={floatingItem}>
                 <div className={styles.inputWrap}>
-                  <input ref={emailRef} id="wl-email" name="email" className={styles.input} placeholder=" " type="email" inputMode="email" autoComplete="email" enterKeyHint="next" maxLength={254} required aria-required="true" aria-invalid={errors.email ? 'true' : undefined} aria-describedby={errors.email ? 'wl-email-error' : undefined} onBlur={event => setErrors(current => ({ ...current, email: validateEmail(event.target.value) }))} onChange={event => updateFieldError('email', event.target.value, false)} />
-                  <label className={`u-label ${styles.floatingLabel}`} htmlFor="wl-email">{WAITLIST_FORM_COPY.emailPlaceholder}</label>
+                  <input ref={emailRef} id="wl-email" name="email" className={styles.input} placeholder=" " type="email" inputMode="email" autoComplete="email" enterKeyHint="next" maxLength={254} required aria-required="true" aria-invalid={errors.email ? 'true' : undefined} aria-describedby={errors.email ? 'wl-email-error' : undefined} onBlur={event => updateFieldError('email', event.target.value, true)} onChange={event => updateFieldError('email', event.target.value, false)} />
+                  <label className={`u-label ${styles.floatingLabel}`} htmlFor="wl-email">{WAITLIST_FORM_COPY.emailLabel}</label>
                 </div>
                 {renderError('wl-email-error', errors.email)}
               </motion.div>
@@ -428,7 +413,7 @@ function HeroForm({ open, onClose, onRegistered }: { open: boolean; onClose: () 
               </motion.div>
               <div className={styles.honeypot} aria-hidden="true"><label htmlFor="wl-company">Company</label><input id="wl-company" name="company" type="text" tabIndex={-1} autoComplete="off" /></div>
               <motion.button className={styles.submit} type="submit" disabled={busy} variants={floatingItem}>{busy && <span className={styles.submitSpinner} aria-hidden="true" />}{busy ? WAITLIST_FORM_COPY.submitting : WAITLIST_FORM_COPY.submit}<span className={styles.submitArrow} aria-hidden="true">→</span></motion.button>
-              <div className={styles.formErrorSlot} aria-live="polite">{errors.form && <p className={styles.error}><InvalidFieldIcon />{errors.form}</p>}</div>
+              <div className={styles.formErrorSlot} aria-live="polite">{errors.form && <p className={styles.statusMessage}>{errors.form}</p>}</div>
             </motion.form>
           )}
         </AnimatePresence>
