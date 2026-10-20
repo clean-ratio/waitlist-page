@@ -21,3 +21,6 @@ artifacts/
 .tmp/
 *.mp4
 *.pdf
+
+# Supabase CLI local state
+supabase/.temp/

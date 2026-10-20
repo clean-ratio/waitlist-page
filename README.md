@@ -34,7 +34,8 @@ The publishable key is public by design. It can only call the two functions:
 row level security is on with no policies, so it cannot read any row back.
 Never use the secret / service_role key here. Each function validates its
 input again and rate-limits per IP (10 sign-ups / 20 profile saves per 10
-minutes). A repeat sign-up with the same email updates the existing entry.
+minutes). A repeat sign-up with the same email is ignored; the existing
+entry is never changed.
 
 See everyone in the Supabase Table Editor (`leads`, `profiles`) or run
 `select * from waitlist_export;` and download the CSV. To delete someone:
@@ -42,6 +43,35 @@ See everyone in the Supabase Table Editor (`leads`, `profiles`) or run
 
 If the profile options in `src/lib/schema.ts` change, update the allow-lists
 in `save_profile` to match.
+
+## Confirmation email (Resend)
+
+A new sign-up gets an email from `Clean Ratio <socials@clean-ratio.com>`
+(replies go to the same address). The page is not involved: a trigger on
+`leads` (`supabase/confirmation-email.sql`) queues a background call to the
+`waitlist-confirmation` Edge Function, which sends through Resend. It fires
+only when a row is actually inserted, so a repeat sign-up sends nothing, and a
+failed send never affects the sign-up.
+
+Edit the wording in `supabase/functions/_shared/emails/waitlist-confirmation.js`
+(`COPY` at the top), then redeploy the function.
+
+Setup, once:
+
+```sh
+npx supabase login
+npx supabase secrets set --project-ref <ref> RESEND_API_KEY=re_… WAITLIST_WEBHOOK_SECRET=<long random string>
+npx supabase functions deploy waitlist-confirmation --project-ref <ref> --no-verify-jwt
+```
+
+Then add the two Vault secrets described at the top of
+`supabase/confirmation-email.sql` and run that file in the SQL editor.
+`--no-verify-jwt` is intended: the function checks `WAITLIST_WEBHOOK_SECRET`
+itself and is only called by the database.
+
+Test without the database: `npm run email:test -- you@example.com "Name"`
+(reads `RESEND_API_KEY` from `.env.local`), or add `--preview` to write the
+HTML to `.tmp/` without sending.
 
 ## Images and type
 
