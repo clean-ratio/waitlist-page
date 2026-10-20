@@ -19,7 +19,10 @@ const rendered = renderWaitlistConfirmation({ name });
 
 if (preview) {
   mkdirSync('.tmp', { recursive: true });
-  writeFileSync('.tmp/waitlist-confirmation.html', rendered.html);
+  // Point images and fonts at the local copies, so the preview works before
+  // they are deployed.
+  const local = rendered.html.replace(/https:\/\/clean-ratio\.com\/(email|fonts)\//g, '../public/$1/');
+  writeFileSync('.tmp/waitlist-confirmation.html', local);
   writeFileSync('.tmp/waitlist-confirmation.txt', rendered.text);
   console.log('Wrote .tmp/waitlist-confirmation.html and .txt');
   process.exit(0);

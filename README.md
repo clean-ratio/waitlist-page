@@ -54,7 +54,9 @@ only when a row is actually inserted, so a repeat sign-up sends nothing, and a
 failed send never affects the sign-up.
 
 Edit the wording in `supabase/functions/_shared/emails/waitlist-confirmation.js`
-(`COPY` at the top), then redeploy the function.
+(`COPY` at the top), then redeploy the function. Its images live in
+`public/email/` (built by `node scripts/email-images.mjs`) and are served
+from clean-ratio.com, so deploy the site before the function when they change.
 
 Setup, once:
 
